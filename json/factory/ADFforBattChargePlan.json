@@ -1,0 +1,9 @@
+{
+	"name": "ADFforBattChargePlan",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "d0039423-3e20-4571-b7f0-4cdc912b809e",
+		"tenantId": "10ef77ca-c1b4-40b8-bfb1-7273c6074497"
+	}
+}
