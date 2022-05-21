@@ -1,0 +1,15 @@
+{
+	"name": "RestResourceForecastSolar",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ForecastSolar",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"no_sun": "1"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	}
+}
