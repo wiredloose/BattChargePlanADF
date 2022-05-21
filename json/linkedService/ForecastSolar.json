@@ -1,0 +1,19 @@
+{
+	"name": "ForecastSolar",
+	"properties": {
+		"description": "Solar Forecast REST Webservice",
+		"parameters": {
+			"no_sun": {
+				"type": "string",
+				"defaultValue": "1"
+			}
+		},
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
