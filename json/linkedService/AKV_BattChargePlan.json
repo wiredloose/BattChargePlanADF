@@ -1,0 +1,10 @@
+{
+	"name": "AKV_BattChargePlan",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://BattChargePlanVault.vault.azure.net/"
+		}
+	}
+}
