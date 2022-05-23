@@ -1,0 +1,37 @@
+{
+	"name": "TestTbl1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlDbBattChargePlan",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "date_1",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "watts",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "watt_hours",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "TestTbl2"
+		}
+	}
+}
