@@ -21,7 +21,7 @@
 					"name": "select1"
 				},
 				{
-					"name": "stringify1"
+					"name": "flatten1"
 				}
 			],
 			"scriptLines": [
@@ -35,16 +35,22 @@
 				"     timeout: 30,",
 				"     paginationRules: ['supportRFC5988' -> 'true'],",
 				"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> source1",
-				"stringify1 derive(listColNames = columnNames()) ~> derivedColumn1",
+				"flatten1 derive(each(watts, patternMatch(`.*` ), $$ = columnNames()),",
+				"          column1 = ERROR_FUNCTION('')) ~> derivedColumn1",
 				"source1 select(mapColumn(",
 				"          watt_hours = body.result.watt_hours,",
-				"          watts = body.result.watts",
+				"          watts = body.result.watts,",
+				"          each(body.result.watts,match(locate('2022', name) != 0),",
+				"               'wattTimes' = $$)",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 stringify(wattsStr = watts ? string,",
-				"          watt_hoursStr = watt_hours ? string,",
-				"     format: 'json') ~> stringify1"
+				"select1 foldDown(unroll(),",
+				"     mapColumn(",
+				"          every(watts,match(like(name,'2022%')))",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1"
 			]
 		}
 	}
