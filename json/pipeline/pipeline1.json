@@ -98,16 +98,6 @@
 				}
 			}
 		],
-		"parameters": {
-			"datetimeWattJSON": {
-				"type": "object"
-			}
-		},
-		"variables": {
-			"varWattStr": {
-				"type": "Array"
-			}
-		},
 		"annotations": []
 	}
 }
