@@ -1,0 +1,21 @@
+{
+	"name": "forecastedWattsBlob",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BattChargePlanBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "adf"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
