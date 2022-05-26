@@ -12,10 +12,27 @@
 					"name": "source1"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "TestTbl1",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
+				},
+				{
+					"name": "flatten1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "parse1"
 				}
 			],
 			"scriptLines": [
@@ -25,8 +42,43 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> source1",
-				"source1 derive(datetime = regexReplace(wattStr, \":[0-9]*,\", \",\"),",
-				"          watt = regexReplace(replace(replace(replace(replace(replace(replace(wattStr, \":00:00\", \"\"),\"\\{\",\"\"),\"}\",\"\"),\"-\",\"\"),\" \",\"\"),\"\\\"\",\"\"),\"[0-9]*:\",\"\")) ~> derivedColumn1"
+				"source1 derive(datetime = split(regexReplace(wattStr, \":[0-9]*,\", \",\"),\",\"),",
+				"          watt = split(regexReplace(replace(replace(replace(replace(replace(replace(wattStr, \":00:00\", \"\"),\"\\{\",\"\"),\"}\",\"\"),\"-\",\"\"),\" \",\"\"),\"\\\"\",\"\"),\"[0-9]*:\",\"\"),\",\")) ~> derivedColumn1",
+				"select1 foldDown(unroll(datetime),",
+				"     mapColumn(",
+				"          datetime,",
+				"          watt",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
+				"parse1 select(mapColumn(",
+				"          datetime,",
+				"          watt",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"derivedColumn1 parse(wattStrJSON = ERROR_FUNCTION(''),",
+				"     format: 'json',",
+				"     documentForm: 'documentPerLine') ~> parse1",
+				"flatten1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          id as integer,",
+				"          date_1 as timestamp,",
+				"          watts as integer,",
+				"          watt_hours as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          watts = watt",
+				"     )) ~> sink1"
 			]
 		}
 	}
