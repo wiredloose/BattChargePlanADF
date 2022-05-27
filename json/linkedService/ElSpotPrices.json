@@ -4,7 +4,7 @@
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT%20*%20from%20\"elspotprices\"%20WHERE%20\"PriceArea\"='DK1'%20AND%20\"HourUTC\">='2022-05-27'%20AND%20\"HourUTC\"<'2022-05-28'%20ORDER%20BY%20\"HourUTC\"%20ASC%20LIMIT%2050",
+			"url": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22='DK1'%20AND%20%22HourUTC%22>='2022-05-27'%20AND%20%22HourUTC%22<'2022-05-28'%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		}
