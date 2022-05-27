@@ -1,0 +1,16 @@
+{
+	"name": "TblElSpotPrices",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlDbBattChargePlan",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "",
+			"table": "elspotprices"
+		}
+	}
+}

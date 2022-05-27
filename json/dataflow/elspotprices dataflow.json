@@ -1,5 +1,5 @@
 {
-	"name": "dataflow1",
+	"name": "elspotprices dataflow",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "TestTbl2",
+						"referenceName": "TblElSpotPrices",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -26,10 +26,10 @@
 					"name": "select1"
 				},
 				{
-					"name": "parse1"
+					"name": "flatten1"
 				},
 				{
-					"name": "flatten1"
+					"name": "derivedColumn1"
 				}
 			],
 			"scriptLines": [
@@ -45,39 +45,23 @@
 				"     paginationRules: ['supportRFC5988' -> 'true'],",
 				"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> source1",
 				"source1 select(mapColumn(",
-				"          watt_hours = body.result.watt_hours,",
-				"          watts = body.result.watts",
+				"          records = body.result.records",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 parse(wattsJson = \"\\{\\\"result\\\":\\{\\\"watts\\\":[\\{\\\"datetime\\\":\\\"2022-05-25 05:00:00\\\",\\\"watt\\\":97},\\{\\\"datetime\\\":\\\"2022-05-25 06:00:00\\\",\\\"watt\\\":475},\\{\\\"datetime\\\":\\\"2022-05-25 07:00:00\\\",\\\"watt\\\":1250},\\{\\\"datetime\\\":\\\"2022-05-25 08:00:00\\\",\\\"watt\\\":2187},\\{\\\"datetime\\\":\\\"2022-05-25 09:00:00\\\",\\\"watt\\\":3525},\\{\\\"datetime\\\":\\\"2022-05-25 10:00:00\\\",\\\"watt\\\":3049},\\{\\\"datetime\\\":\\\"2022-05-25 11:00:00\\\",\\\"watt\\\":4275},\\{\\\"datetime\\\":\\\"2022-05-25 12:00:00\\\",\\\"watt\\\":4457},\\{\\\"datetime\\\":\\\"2022-05-25 13:00:00\\\",\\\"watt\\\":4457},\\{\\\"datetime\\\":\\\"2022-05-25 14:00:00\\\",\\\"watt\\\":4111},\\{\\\"datetime\\\":\\\"2022-05-25 15:00:00\\\",\\\"watt\\\":3303},\\{\\\"datetime\\\":\\\"2022-05-25 16:00:00\\\",\\\"watt\\\":2380},\\{\\\"datetime\\\":\\\"2022-05-25 17:00:00\\\",\\\"watt\\\":1529},\\{\\\"datetime\\\":\\\"2022-05-25 18:00:00\\\",\\\"watt\\\":920},\\{\\\"datetime\\\":\\\"2022-05-25 19:00:00\\\",\\\"watt\\\":411},\\{\\\"datetime\\\":\\\"2022-05-25 20:00:00\\\",\\\"watt\\\":180},\\{\\\"datetime\\\":\\\"2022-05-25 21:00:00\\\",\\\"watt\\\":102},\\{\\\"datetime\\\":\\\"2022-05-26 05:00:00\\\",\\\"watt\\\":92},\\{\\\"datetime\\\":\\\"2022-05-26 06:00:00\\\",\\\"watt\\\":470},\\{\\\"datetime\\\":\\\"2022-05-26 07:00:00\\\",\\\"watt\\\":1276},\\{\\\"datetime\\\":\\\"2022-05-26 08:00:00\\\",\\\"watt\\\":2316},\\{\\\"datetime\\\":\\\"2022-05-26 09:00:00\\\",\\\"watt\\\":3379},\\{\\\"datetime\\\":\\\"2022-05-26 10:00:00\\\",\\\"watt\\\":4306},\\{\\\"datetime\\\":\\\"2022-05-26 11:00:00\\\",\\\"watt\\\":4990},\\{\\\"datetime\\\":\\\"2022-05-26 12:00:00\\\",\\\"watt\\\":5312},\\{\\\"datetime\\\":\\\"2022-05-26 13:00:00\\\",\\\"watt\\\":5358},\\{\\\"datetime\\\":\\\"2022-05-26 14:00:00\\\",\\\"watt\\\":5065},\\{\\\"datetime\\\":\\\"2022-05-26 15:00:00\\\",\\\"watt\\\":4444},\\{\\\"datetime\\\":\\\"2022-05-26 16:00:00\\\",\\\"watt\\\":3626},\\{\\\"datetime\\\":\\\"2022-05-26 17:00:00\\\",\\\"watt\\\":2649},\\{\\\"datetime\\\":\\\"2022-05-26 18:00:00\\\",\\\"watt\\\":1691},\\{\\\"datetime\\\":\\\"2022-05-26 19:00:00\\\",\\\"watt\\\":833},\\{\\\"datetime\\\":\\\"2022-05-26 20:00:00\\\",\\\"watt\\\":370},\\{\\\"datetime\\\":\\\"2022-05-26 21:00:00\\\",\\\"watt\\\":148}]},\\\"message\\\":\\{\\\"code\\\":0,\\\"type\\\":\\\"success\\\",\\\"text\\\":\\\"\\\",\\\"info\\\":\\{\\\"latitude\\\":54.9113,\\\"longitude\\\":9.7645,\\\"place\\\":\\\"6400 Sønderborg, Region Syddanmark, DK\\\",\\\"timezone\\\":\\\"Europe/Copenhagen\\\"},\\\"ratelimit\\\":\\{\\\"period\\\":3600,\\\"limit\\\":12,\\\"remaining\\\":11}}}\" ? (result as (watts as (datetime as string,",
-				"     watt as integer)[]),",
-				"     message as (code as integer,",
-				"     type as string,",
-				"     text as string,",
-				"     info as (latitude as integer,",
-				"     longitude as integer,",
-				"     place as string,",
-				"     timezone as string),",
-				"     ratelimit as (period as integer,",
-				"     limit as integer,",
-				"     remaining as integer)))[],",
-				"     format: 'json',",
-				"     documentForm: 'documentPerLine') ~> parse1",
-				"parse1 foldDown(unroll(wattsJson.result.watts),",
+				"select1 foldDown(unroll(records),",
 				"     mapColumn(",
-				"          datetime = wattsJson.result.watts.datetime,",
-				"          watt = wattsJson.result.watts.watt",
+				"          HourDK = records.HourDK,",
+				"          HourUTC = records.HourUTC,",
+				"          SpotPriceDKK = records.SpotPriceDKK,",
+				"          SpotPriceEUR = records.SpotPriceEUR",
 				"     ),",
 				"     skipDuplicateMapInputs: false,",
 				"     skipDuplicateMapOutputs: false) ~> flatten1",
-				"flatten1 sink(allowSchemaDrift: true,",
+				"flatten1 derive(HourUTC = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss', 'UTC', 'en-US'),",
+				"          HourDK = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss')) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     input(",
-				"          date_1 as string,",
-				"          watts as integer,",
-				"          watt_hours as integer",
-				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
 				"     updateable:false,",
@@ -87,8 +71,10 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          date_1 = datetime,",
-				"          watts = watt",
+				"          hour_dk = HourDK,",
+				"          hour_utc = HourUTC,",
+				"          SpotPriceDKK,",
+				"          SpotPriceEUR",
 				"     )) ~> sink1"
 			]
 		}
