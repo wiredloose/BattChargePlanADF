@@ -1,0 +1,12 @@
+{
+	"name": "RestResourceElSpotPrices",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ElSpotPrices",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	}
+}
