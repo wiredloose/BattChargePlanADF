@@ -23,6 +23,10 @@
 			"type": "string",
 			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
 		},
+		"ElSpotPrices_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22='DK1'%20AND%20%22HourUTC%22%3e='2022-05-27'%20AND%20%22HourUTC%22%3c'2022-05-28'%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -61,6 +65,9 @@
 					},
 					"ForecastSolar_properties_typeProperties_url": {
 						"value": "[parameters('ForecastSolar_properties_typeProperties_url')]"
+					},
+					"ElSpotPrices_properties_typeProperties_url": {
+						"value": "[parameters('ElSpotPrices_properties_typeProperties_url')]"
 					}
 				}
 			},

@@ -22,59 +22,16 @@
 		"ForecastSolar_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
+		},
+		"ElSpotPrices_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22='DK1'%20AND%20%22HourUTC%22%3e='2022-05-27'%20AND%20%22HourUTC%22%3c'2022-05-28'%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050"
 		}
 	},
 	"variables": {
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
-		{
-			"name": "[concat(parameters('factoryName'), '/pipeline-using-dataflow')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Data flow1",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "1.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "dataflow1",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"source1": {},
-									"sink1": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
-			]
-		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -384,7 +341,135 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "forecastedWattsBlob",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "TestTbl1",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "flatten1"
+						},
+						{
+							"name": "select1"
+						},
+						{
+							"name": "flatten2"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          wattStr as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 derive(datetime = split(regexReplace(wattStr, \":[0-9]*,\", \",\"),\",\"),",
+						"          watt = split(regexReplace(replace(replace(replace(replace(replace(replace(wattStr, \":00:00\", \"\"),\"\\{\",\"\"),\"}\",\"\"),\"-\",\"\"),\" \",\"\"),\"\\\"\",\"\"),\"[0-9]*:\",\"\"),\",\")) ~> derivedColumn1",
+						"select1 foldDown(unroll(datetime),",
+						"     mapColumn(",
+						"          datetimeCol = datetime,",
+						"          wattCol = watt",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flatten1",
+						"derivedColumn1 select(mapColumn(",
+						"          datetime,",
+						"          watt",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"flatten1 foldDown(unroll(wattCol),",
+						"     mapColumn(",
+						"          watt = wattCol,",
+						"          datetime = datetimeCol",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flatten2",
+						"flatten2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as integer,",
+						"          date_1 as timestamp,",
+						"          watts as integer,",
+						"          watt_hours as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          watts = watt",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/forecastedWattsBlob')]",
+				"[concat(variables('factoryId'), '/datasets/TestTbl1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ElSpotPrices')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('ElSpotPrices_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RestResourceElSpotPrices')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ElSpotPrices",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ElSpotPrices')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/forecastsolar dataflow')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -486,7 +571,28 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
+			"name": "[concat(parameters('factoryName'), '/TblElSpotPrices')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlDbBattChargePlan",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "elspotprices"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SqlDbBattChargePlan')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/elspotprices dataflow')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -495,7 +601,7 @@
 					"sources": [
 						{
 							"dataset": {
-								"referenceName": "forecastedWattsBlob",
+								"referenceName": "RestResourceElSpotPrices",
 								"type": "DatasetReference"
 							},
 							"name": "source1"
@@ -504,7 +610,7 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "TestTbl1",
+								"referenceName": "TblElSpotPrices",
 								"type": "DatasetReference"
 							},
 							"name": "sink1"
@@ -512,55 +618,45 @@
 					],
 					"transformations": [
 						{
-							"name": "derivedColumn1"
+							"name": "select1"
 						},
 						{
 							"name": "flatten1"
 						},
 						{
-							"name": "select1"
-						},
-						{
-							"name": "flatten2"
+							"name": "derivedColumn1"
 						}
 					],
 					"scriptLines": [
 						"source(output(",
-						"          wattStr as string",
+						"          body as (help as string, result as (fields as (id as string, type as string)[], records as (HourDK as string, HourUTC as string, PriceArea as string, SpotPriceDKK as double, SpotPriceEUR as double, {_full_text} as string, {_id} as integer)[], sql as string), success as boolean),",
+						"          headers as [string,string]",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> source1",
-						"source1 derive(datetime = split(regexReplace(wattStr, \":[0-9]*,\", \",\"),\",\"),",
-						"          watt = split(regexReplace(replace(replace(replace(replace(replace(replace(wattStr, \":00:00\", \"\"),\"\\{\",\"\"),\"}\",\"\"),\"-\",\"\"),\" \",\"\"),\"\\\"\",\"\"),\"[0-9]*:\",\"\"),\",\")) ~> derivedColumn1",
-						"select1 foldDown(unroll(datetime),",
-						"     mapColumn(",
-						"          datetimeCol = datetime,",
-						"          wattCol = watt",
-						"     ),",
-						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flatten1",
-						"derivedColumn1 select(mapColumn(",
-						"          datetime,",
-						"          watt",
+						"     httpMethod: 'GET',",
+						"     timeout: 30,",
+						"     requestInterval: 0,",
+						"     paginationRules: ['supportRFC5988' -> 'true'],",
+						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> source1",
+						"source1 select(mapColumn(",
+						"          records = body.result.records",
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true) ~> select1",
-						"flatten1 foldDown(unroll(wattCol),",
+						"select1 foldDown(unroll(records),",
 						"     mapColumn(",
-						"          watt = wattCol,",
-						"          datetime = datetimeCol",
+						"          HourDK = records.HourDK,",
+						"          HourUTC = records.HourUTC,",
+						"          SpotPriceDKK = records.SpotPriceDKK,",
+						"          SpotPriceEUR = records.SpotPriceEUR",
 						"     ),",
 						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flatten2",
-						"flatten2 sink(allowSchemaDrift: true,",
+						"     skipDuplicateMapOutputs: false) ~> flatten1",
+						"flatten1 derive(HourUTC = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss', 'UTC', 'en-US'),",
+						"          HourDK = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss')) ~> derivedColumn1",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     input(",
-						"          id as integer,",
-						"          date_1 as timestamp,",
-						"          watts as integer,",
-						"          watt_hours as integer",
-						"     ),",
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
@@ -570,14 +666,111 @@
 						"     skipDuplicateMapOutputs: true,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          watts = watt",
+						"          hour_dk = HourDK,",
+						"          hour_utc = HourUTC,",
+						"          SpotPriceDKK,",
+						"          SpotPriceEUR",
 						"     )) ~> sink1"
 					]
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/forecastedWattsBlob')]",
-				"[concat(variables('factoryId'), '/datasets/TestTbl1')]"
+				"[concat(variables('factoryId'), '/datasets/RestResourceElSpotPrices')]",
+				"[concat(variables('factoryId'), '/datasets/TblElSpotPrices')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/elspotprices-loaddata')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "elspotprices dataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "elspotprices dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/elspotprices dataflow')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/forecast-solar-loaddata')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "forecastsolar dataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "forecastsolar dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/forecastsolar dataflow')]"
 			]
 		}
 	]
