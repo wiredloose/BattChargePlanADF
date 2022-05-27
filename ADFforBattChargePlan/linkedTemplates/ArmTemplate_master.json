@@ -1,0 +1,70 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "ADFforBattChargePlan"
+		},
+		"BattChargePlanBlobStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'BattChargePlanBlobStorage1'"
+		},
+		"SqlDbBattChargePlan_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SqlDbBattChargePlan'"
+		},
+		"AKV_BattChargePlan_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://BattChargePlanVault.vault.azure.net/"
+		},
+		"ForecastSolar_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "ADFforBattChargePlan_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"BattChargePlanBlobStorage1_connectionString": {
+						"value": "[parameters('BattChargePlanBlobStorage1_connectionString')]"
+					},
+					"SqlDbBattChargePlan_connectionString": {
+						"value": "[parameters('SqlDbBattChargePlan_connectionString')]"
+					},
+					"AKV_BattChargePlan_properties_typeProperties_baseUrl": {
+						"value": "[parameters('AKV_BattChargePlan_properties_typeProperties_baseUrl')]"
+					},
+					"ForecastSolar_properties_typeProperties_url": {
+						"value": "[parameters('ForecastSolar_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
