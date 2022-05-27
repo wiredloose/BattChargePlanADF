@@ -1,9 +1,9 @@
 {
-	"name": "pipeline-using-dataflow",
+	"name": "forecast-solar-loaddata",
 	"properties": {
 		"activities": [
 			{
-				"name": "Data flow1",
+				"name": "forecastsolar dataflow",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "dataflow1",
+						"referenceName": "forecastsolar dataflow",
 						"type": "DataFlowReference"
 					},
 					"compute": {
