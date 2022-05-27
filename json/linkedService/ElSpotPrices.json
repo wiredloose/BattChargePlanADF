@@ -1,0 +1,12 @@
+{
+	"name": "ElSpotPrices",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT * from \"elspotprices\" WHERE \"PriceArea\" = 'DK1' AND \"HourUTC\" >= '2022-05-27' AND \"HourUTC\" < '2022-05-28' ORDER BY \"HourUTC\" ASC LIMIT 50",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
