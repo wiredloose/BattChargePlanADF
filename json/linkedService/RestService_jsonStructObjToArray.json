@@ -1,0 +1,12 @@
+{
+	"name": "RestService_jsonStructObjToArray",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray?jpath=result.watts&keyToProp=datetime&valToProp=watt",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
