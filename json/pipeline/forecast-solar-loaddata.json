@@ -7,7 +7,7 @@
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "ObjectPropsToArray Azure Function",
+						"activity": "azfunc_output",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -34,7 +34,7 @@
 				}
 			},
 			{
-				"name": "ObjectPropsToArray Azure Function",
+				"name": "ObjectPropsToArray",
 				"type": "AzureFunctionActivity",
 				"dependsOn": [
 					{
@@ -53,7 +53,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"functionName": "ObjectPropsToArray?jpath=result.watts&keyToProp=datetime&valToProp=watt",
+					"functionName": "ObjectPropsToArray?jpath=result.watts,result.watt_hours,result.watt_hours_day&keyToProp=datetime&valToProp=watt",
 					"method": "POST",
 					"body": {
 						"value": "@activity('WebForecastSolar').output",
@@ -87,8 +87,33 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "azfunc_output",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ObjectPropsToArray",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "objPropsToArr_output",
+					"value": {
+						"value": "@string(activity('ObjectPropsToArray').output)",
+						"type": "Expression"
+					}
+				}
 			}
 		],
+		"variables": {
+			"objPropsToArr_output": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }
