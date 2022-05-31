@@ -5,7 +5,14 @@
 			{
 				"name": "forecastsolar dataflow",
 				"type": "ExecuteDataFlow",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "ObjectPropsToArray Azure Function",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "1.00:00:00",
 					"retry": 0,
@@ -24,6 +31,61 @@
 						"computeType": "General"
 					},
 					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "ObjectPropsToArray Azure Function",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [
+					{
+						"activity": "WebForecastSolar",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "ObjectPropsToArray?jpath=result.watts&keyToProp=datetime&valToProp=watt",
+					"method": "POST",
+					"body": {
+						"value": "@activity('WebForecastSolar').output",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzFuncJsonStructObjToArray",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "WebForecastSolar",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1",
+					"method": "GET",
+					"datasets": [
+						{
+							"referenceName": "RestResourceForecastSolar",
+							"type": "DatasetReference"
+						}
+					]
 				}
 			}
 		],
