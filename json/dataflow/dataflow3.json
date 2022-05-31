@@ -30,9 +30,6 @@
 				}
 			],
 			"scriptLines": [
-				"parameters{",
-				"     parameter1 as string (toString(body))",
-				"}",
 				"source(output(",
 				"          JsonText as string",
 				"     ),",
