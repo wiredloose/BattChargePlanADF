@@ -3,8 +3,40 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy data1",
-				"type": "Copy",
+				"name": "ObjectPropsToArray",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [
+					{
+						"activity": "WebForecastSolar",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "ObjectPropsToArray?jpath=result.watts,result.watt_hours,result.watt_hours_day&keyToProp=datetime&valToProp=watt",
+					"method": "POST",
+					"body": {
+						"value": "@activity('WebForecastSolar').output",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzFuncJsonStructObjToArray",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "WebForecastSolar",
+				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
@@ -15,14 +47,41 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "RestSource",
-						"httpRequestTimeout": "00:01:40",
-						"requestInterval": "00.00:00:00.010",
-						"requestMethod": "GET",
-						"paginationRules": {
-							"supportRFC5988": "true"
+					"url": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1",
+					"method": "GET",
+					"datasets": [
+						{
+							"referenceName": "RestResourceForecastSolar",
+							"type": "DatasetReference"
 						}
+					]
+				}
+			},
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ObjectPropsToArray",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT ''",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
 					},
 					"sink": {
 						"type": "DelimitedTextSink",
@@ -37,67 +96,29 @@
 					},
 					"enableStaging": false,
 					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"path": "$['result']['watts']"
-								},
-								"sink": {
-									"type": "String",
-									"ordinal": 1
-								}
-							}
-						],
-						"collectionReference": "",
-						"mapComplexValuesToString": true
+						"value": "@activity('ObjectPropsToArray').output",
+						"type": "Expression"
 					}
 				},
 				"inputs": [
 					{
-						"referenceName": "RestResourceForecastSolar",
+						"referenceName": "TestTbl2",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "forecastedWattsBlob",
+						"referenceName": "ForecastSolarTxt",
 						"type": "DatasetReference"
 					}
 				]
-			},
-			{
-				"name": "transform-forecast-file",
-				"type": "ExecuteDataFlow",
-				"dependsOn": [
-					{
-						"activity": "Copy data1",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "1.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "dataflow2",
-						"type": "DataFlowReference"
-					},
-					"compute": {
-						"coreCount": 8,
-						"computeType": "General"
-					},
-					"traceLevel": "Fine"
-				}
 			}
 		],
+		"variables": {
+			"objPropsToArr_output": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }

@@ -1,0 +1,23 @@
+{
+	"name": "ForecastSolarTxt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BattChargePlanBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "forecastsolar.json",
+				"folderPath": "forecastsolar",
+				"container": "adf"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
