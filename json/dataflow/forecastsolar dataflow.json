@@ -98,7 +98,7 @@
 				"     bodyColumnName: 'result',",
 				"     requestFormat: ['type' -> 'json'],",
 				"     responseFormat: ['type' -> 'json', 'documentForm' -> 'documentPerLine']) ~> externalCall1",
-				"source1 derive(ParamStr = '?jpath=result.watts&keyToProp=datetime&valToProp=watt&json={\"result\":' + toString(body.result)+'}') ~> CreateURL",
+				"source1 derive(ParamStr = '?jpath=result.watts,result.watt_hours,result.watt_hours_day&keyToProp=datetime&valToProp=watt&json={\"result\":' + toString(body.result)+'}') ~> CreateURL",
 				"flatten1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
