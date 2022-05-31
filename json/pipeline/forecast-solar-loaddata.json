@@ -24,13 +24,7 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "forecastsolar dataflow",
-						"type": "DataFlowReference",
-						"parameters": {
-							"azFuncOutput": {
-								"value": "@variables('objPropsToArr_output')",
-								"type": "Expression"
-							}
-						}
+						"type": "DataFlowReference"
 					},
 					"compute": {
 						"coreCount": 8,
