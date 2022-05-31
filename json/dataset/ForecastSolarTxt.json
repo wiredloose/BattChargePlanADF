@@ -14,9 +14,9 @@
 				"folderPath": "forecastsolar",
 				"container": "adf"
 			},
-			"columnDelimiter": ",",
+			"columnDelimiter": "",
 			"escapeChar": "\\",
-			"quoteChar": "\""
+			"quoteChar": ""
 		},
 		"schema": []
 	}
