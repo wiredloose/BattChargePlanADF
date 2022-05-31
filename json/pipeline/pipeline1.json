@@ -83,7 +83,7 @@
 							{
 								"name": "JsonText",
 								"value": {
-									"value": "@activity('ObjectPropsToArray').output",
+									"value": "@string(activity('ObjectPropsToArray').output)",
 									"type": "Expression"
 								}
 							}
