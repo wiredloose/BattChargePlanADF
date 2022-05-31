@@ -79,6 +79,15 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
+						"additionalColumns": [
+							{
+								"name": "JsonText",
+								"value": {
+									"value": "@string(activity('ObjectPropsToArray').output)",
+									"type": "Expression"
+								}
+							}
+						],
 						"sqlReaderQuery": "SELECT ''",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
