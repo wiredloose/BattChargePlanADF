@@ -4,7 +4,7 @@
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray",
+			"url": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray?jpath=result.watts,result.watt_hours,result.watt_hours_day&keyToProp=datetime&valToProp=watt",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		}
