@@ -6,7 +6,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "RestResourceForecastSolar",
+						"referenceName": "ForecastSolarJson",
 						"type": "DatasetReference"
 					},
 					"name": "source1"
@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "TestTbl1",
+						"referenceName": "TestTbl2",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -23,23 +23,10 @@
 			],
 			"transformations": [
 				{
-					"name": "derivedColumn1"
-				},
-				{
 					"name": "flatten1"
 				},
 				{
-					"name": "select1"
-				},
-				{
-					"name": "flatten2"
-				},
-				{
-					"name": "externalCall1",
-					"linkedService": {
-						"referenceName": "RestService_jsonStructObjToArray",
-						"type": "LinkedServiceReference"
-					}
+					"name": "parse1"
 				}
 			],
 			"scriptLines": [
@@ -47,58 +34,58 @@
 				"     parameter1 as string (toString(body))",
 				"}",
 				"source(output(",
-				"          body as (message as (code as boolean, info as (latitude as double, longitude as double, place as string, timezone as string), ratelimit as (limit as short, period as short, remaining as short), text as string, type as string), result as (watt_hours as ({2022-05-31 05:00:00} as short, {2022-05-31 06:00:00} as short, {2022-05-31 07:00:00} as short, {2022-05-31 08:00:00} as short, {2022-05-31 09:00:00} as short, {2022-05-31 10:00:00} as short, {2022-05-31 11:00:00} as short, {2022-05-31 12:00:00} as short, {2022-05-31 13:00:00} as short, {2022-05-31 14:00:00} as short, {2022-05-31 15:00:00} as short, {2022-05-31 16:00:00} as short, {2022-05-31 17:00:00} as short, {2022-05-31 18:00:00} as short, {2022-05-31 19:00:00} as short, {2022-05-31 20:00:00} as short, {2022-05-31 21:00:00} as short, {2022-06-01 05:00:00} as short, {2022-06-01 06:00:00} as short, {2022-06-01 07:00:00} as short, {2022-06-01 08:00:00} as short, {2022-06-01 09:00:00} as short, {2022-06-01 10:00:00} as short, {2022-06-01 11:00:00} as short, {2022-06-01 12:00:00} as short, {2022-06-01 13:00:00} as short, {2022-06-01 14:00:00} as short, {2022-06-01 15:00:00} as short, {2022-06-01 16:00:00} as short, {2022-06-01 17:00:00} as short, {2022-06-01 18:00:00} as short, {2022-06-01 19:00:00} as short, {2022-06-01 20:00:00} as short, {2022-06-01 21:00:00} as short), watt_hours_day as ({2022-05-31} as short, {2022-06-01} as short), watts as ({2022-05-31 05:00:00} as short, {2022-05-31 06:00:00} as short, {2022-05-31 07:00:00} as short, {2022-05-31 08:00:00} as short, {2022-05-31 09:00:00} as short, {2022-05-31 10:00:00} as short, {2022-05-31 11:00:00} as short, {2022-05-31 12:00:00} as short, {2022-05-31 13:00:00} as short, {2022-05-31 14:00:00} as short, {2022-05-31 15:00:00} as short, {2022-05-31 16:00:00} as short, {2022-05-31 17:00:00} as short, {2022-05-31 18:00:00} as short, {2022-05-31 19:00:00} as short, {2022-05-31 20:00:00} as short, {2022-05-31 21:00:00} as short, {2022-06-01 05:00:00} as short, {2022-06-01 06:00:00} as short, {2022-06-01 07:00:00} as short, {2022-06-01 08:00:00} as short, {2022-06-01 09:00:00} as short, {2022-06-01 10:00:00} as short, {2022-06-01 11:00:00} as short, {2022-06-01 12:00:00} as short, {2022-06-01 13:00:00} as short, {2022-06-01 14:00:00} as short, {2022-06-01 15:00:00} as short, {2022-06-01 16:00:00} as short, {2022-06-01 17:00:00} as short, {2022-06-01 18:00:00} as short, {2022-06-01 19:00:00} as short, {2022-06-01 20:00:00} as short, {2022-06-01 21:00:00} as short))),",
-				"          headers as [string,string]",
+				"          JsonText as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     httpMethod: 'GET',",
-				"     timeout: 30,",
-				"     responseFormat: ['type' -> 'json', 'documentForm' -> 'documentPerLine']) ~> source1",
-				"externalCall1 derive(datetime = split(regexReplace(wattStr, \":[0-9]*,\", \",\"),\",\"),",
-				"          watt = split(regexReplace(replace(replace(replace(replace(replace(replace(wattStr, \":00:00\", \"\"),\"\\{\",\"\"),\"}\",\"\"),\"-\",\"\"),\" \",\"\"),\"\\\"\",\"\"),\"[0-9]*:\",\"\"),\",\")) ~> derivedColumn1",
-				"select1 foldDown(unroll(datetime),",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'documentPerLine',",
+				"     backslashEscape: true) ~> source1",
+				"parse1 foldDown(unroll(JsonText.result.watts),",
 				"     mapColumn(",
-				"          datetimeCol = datetime,",
-				"          wattCol = watt",
+				"          datetime = JsonText.result.watts.datetime,",
+				"          watt = JsonText.result.watts.watt",
 				"     ),",
 				"     skipDuplicateMapInputs: false,",
 				"     skipDuplicateMapOutputs: false) ~> flatten1",
-				"derivedColumn1 select(mapColumn(",
-				"          datetime,",
-				"          watt",
-				"     ),",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1",
-				"flatten1 foldDown(unroll(wattCol),",
-				"     mapColumn(",
-				"          watt = wattCol,",
-				"          datetime = datetimeCol",
-				"     ),",
-				"     skipDuplicateMapInputs: false,",
-				"     skipDuplicateMapOutputs: false) ~> flatten2",
-				"source1 call(mapColumn(",
-				"          body1 = body",
-				"     ),",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     output(",
-				"          body as (result as (watts as (datetime as string, watt as integer)[], watt_hours as (datetime as string, watt as integer)[], watt_hours_day as (datetime as string, watt as integer)[]), message as (code as integer, type as string, text as string, info as (latitude as float, longitude as float, place as string, timezone as string), ratelimit as (period as integer, limit as integer, remaining as integer)))[]",
-				"     ),",
-				"     allowSchemaDrift: true,",
-				"     format: 'rest',",
-				"     store: 'restservice',",
-				"     timeout: 30,",
-				"     httpMethod: 'GET',",
-				"     entity: '?jpath=result.watts,result.watt_hours,result.watt_hours_day&keyToProp=datetime&valToProp=watt',",
-				"     bodyColumnName: 'body',",
-				"     requestFormat: ['type' -> 'json'],",
-				"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> externalCall1",
-				"flatten2 sink(allowSchemaDrift: true,",
+				"source1 parse(JsonText = JsonText ? (result as (\r",
+				"     watts as (\r",
+				"          datetime as string,\r",
+				"          watt as integer\r",
+				"          )[],\r",
+				"     watt_hours as (\r",
+				"          datetime as string,\r",
+				"          watt as integer\r",
+				"          )[],\r",
+				"     watt_hours_day as (\r",
+				"          datetime as string,\r",
+				"          watt as integer\r",
+				"          )[]\r",
+				"     ),\r",
+				"\r",
+				"     message as (\r",
+				"          code as integer,\r",
+				"          type as string,\r",
+				"          text as string,\r",
+				"          info as (\r",
+				"               latitude as integer,\r",
+				"               longitude as integer,\r",
+				"               place as string,\r",
+				"               timezone as string\r",
+				"               ),\r",
+				"          ratelimit as (\r",
+				"               period as integer,\r",
+				"               limit as integer,\r",
+				"               remaining as integer\r",
+				"               )\r",
+				"          )\r",
+				"     )[],",
+				"     format: 'json',",
+				"     documentForm: 'documentPerLine') ~> parse1",
+				"flatten1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          id as integer,",
-				"          date_1 as timestamp,",
+				"          date_1 as string,",
 				"          watts as integer,",
 				"          watt_hours as integer",
 				"     ),",
@@ -111,6 +98,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
+				"          date_1 = datetime,",
 				"          watts = watt",
 				"     )) ~> sink1"
 			]
