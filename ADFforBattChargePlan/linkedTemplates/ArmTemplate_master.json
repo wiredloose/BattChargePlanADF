@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "ADFforBattChargePlan"
 		},
+		"AzFuncJsonStructObjToArray_functionKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'functionKey' of 'AzFuncJsonStructObjToArray'"
+		},
 		"BattChargePlanBlobStorage1_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'BattChargePlanBlobStorage1'"
@@ -19,13 +23,21 @@
 			"type": "string",
 			"defaultValue": "https://BattChargePlanVault.vault.azure.net/"
 		},
-		"ForecastSolar_properties_typeProperties_url": {
+		"AzFuncJsonStructObjToArray_properties_typeProperties_functionAppUrl": {
 			"type": "string",
-			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
+			"defaultValue": "https://jsonstructobjtoarray.azurewebsites.net"
 		},
 		"ElSpotPrices_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22='DK1'%20AND%20%22HourUTC%22%3e='2022-05-27'%20AND%20%22HourUTC%22%3c'2022-05-28'%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050"
+		},
+		"ForecastSolar_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
+		},
+		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray"
 		},
 		"containerUri": {
 			"type": "string",
@@ -54,6 +66,9 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"AzFuncJsonStructObjToArray_functionKey": {
+						"value": "[parameters('AzFuncJsonStructObjToArray_functionKey')]"
+					},
 					"BattChargePlanBlobStorage1_connectionString": {
 						"value": "[parameters('BattChargePlanBlobStorage1_connectionString')]"
 					},
@@ -63,15 +78,41 @@
 					"AKV_BattChargePlan_properties_typeProperties_baseUrl": {
 						"value": "[parameters('AKV_BattChargePlan_properties_typeProperties_baseUrl')]"
 					},
-					"ForecastSolar_properties_typeProperties_url": {
-						"value": "[parameters('ForecastSolar_properties_typeProperties_url')]"
+					"AzFuncJsonStructObjToArray_properties_typeProperties_functionAppUrl": {
+						"value": "[parameters('AzFuncJsonStructObjToArray_properties_typeProperties_functionAppUrl')]"
 					},
 					"ElSpotPrices_properties_typeProperties_url": {
 						"value": "[parameters('ElSpotPrices_properties_typeProperties_url')]"
+					},
+					"ForecastSolar_properties_typeProperties_url": {
+						"value": "[parameters('ForecastSolar_properties_typeProperties_url')]"
+					},
+					"RestService_jsonStructObjToArray_properties_typeProperties_url": {
+						"value": "[parameters('RestService_jsonStructObjToArray_properties_typeProperties_url')]"
 					}
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "ADFforBattChargePlan_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADFforBattChargePlan_ArmTemplate_0')]"
+			]
 		}
 	]
 }
