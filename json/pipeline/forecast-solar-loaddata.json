@@ -7,7 +7,7 @@
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "azfunc_output",
+						"activity": "Store JSON output",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -95,8 +95,8 @@
 				}
 			},
 			{
-				"name": "azfunc_output",
-				"type": "SetVariable",
+				"name": "Store JSON output",
+				"type": "Copy",
 				"dependsOn": [
 					{
 						"activity": "ObjectPropsToArray",
@@ -105,14 +105,57 @@
 						]
 					}
 				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "objPropsToArr_output",
-					"value": {
-						"value": "@string(activity('ObjectPropsToArray').output)",
+					"source": {
+						"type": "AzureSqlSource",
+						"additionalColumns": [
+							{
+								"name": "JsonText",
+								"value": {
+									"value": "@string(activity('ObjectPropsToArray').output)",
+									"type": "Expression"
+								}
+							}
+						],
+						"sqlReaderQuery": "SELECT ''",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@activity('ObjectPropsToArray').output",
 						"type": "Expression"
 					}
-				}
+				},
+				"inputs": [
+					{
+						"referenceName": "TestTbl2",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ForecastSolarJson",
+						"type": "DatasetReference"
+					}
+				]
 			}
 		],
 		"variables": {
