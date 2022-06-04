@@ -30,9 +30,6 @@
 				}
 			],
 			"scriptLines": [
-				"parameters{",
-				"     func_output as string (\"\\{result:\\{watts:[]}}\")",
-				"}",
 				"source(output(",
 				"          JsonText as string",
 				"     ),",
