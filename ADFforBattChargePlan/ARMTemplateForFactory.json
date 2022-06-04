@@ -37,7 +37,7 @@
 		},
 		"RestServiceSonnenBattery_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-05-29T00:00:00+02:00&filter[end]=2022-05-29T23:59:59+02:00&filter[resolution]=1-hour"
+			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-06-02T00:00:00+02:00&filter[end]=2022-06-02T23:59:59+02:00&filter[resolution]=1-hour"
 		},
 		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 			"type": "string",
@@ -48,6 +48,53 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/battery-stat-loaddata')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "batterystat dataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "batterystat dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/batterystat dataflow')]"
+			]
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/elspotprices-loaddata')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -74,8 +121,7 @@
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
-								},
-								"linkedServiceParameters": {}
+								}
 							},
 							"staging": {},
 							"compute": {
@@ -129,8 +175,7 @@
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
-								},
-								"linkedServiceParameters": {}
+								}
 							},
 							"staging": {},
 							"compute": {
@@ -523,6 +568,49 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ForecasySolarJson')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BattChargePlanBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "forecastsolar.json",
+						"folderPath": "forecastsolar",
+						"container": "adf"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RestResourceBatteryStat')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "RestServiceSonnenBattery",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/RestServiceSonnenBattery')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/RestResourceElSpotPrices')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -676,6 +764,89 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/chargePlanTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlDbBattChargePlan",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "date",
+						"type": "date"
+					},
+					{
+						"name": "hour",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_consumption",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surplus_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_potential",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_trigger",
+						"type": "bit"
+					},
+					{
+						"name": "charging",
+						"type": "bit"
+					},
+					{
+						"name": "accumulated_charge",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "elspotprice_dkk",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "surplus_sellable_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "sale_potential_dkk",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "chargeplan"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SqlDbBattChargePlan')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/forecastedWattsBlob')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -802,7 +973,13 @@
 				"typeProperties": {
 					"url": "[parameters('RestServiceSonnenBattery_properties_typeProperties_url')]",
 					"enableServerCertificateValidation": true,
-					"authenticationType": "Anonymous"
+					"authenticationType": "Anonymous",
+					"authHeaders": {
+						"Authorization": {
+							"type": "SecureString",
+							"value": "**********"
+						}
+					}
 				}
 			},
 			"dependsOn": []
@@ -871,6 +1048,160 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/forecast-solar-loaddata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/daily_elspotprices')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "elspotprices-loaddata",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2022-05-31T00:20:00",
+						"timeZone": "Romance Standard Time",
+						"schedule": {
+							"minutes": [
+								25
+							],
+							"hours": [
+								2
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/elspotprices-loaddata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/batterystat dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "RestResourceBatteryStat",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "flattenConsumedEnergy"
+						},
+						{
+							"name": "AddAsHourBasedOnRowNumber"
+						},
+						{
+							"name": "AddConstantColumn"
+						},
+						{
+							"name": "AlterRow1"
+						},
+						{
+							"name": "AddIdCol"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          body as (data as (attributes as (battery_charged_energy as short[], battery_discharged_energy as short[], consumed_energy as short[], direct_usage_energy as short[], end as string, grid_feedin_energy as short[], grid_purchase_energy as short[], measurement_method as string, produced_energy as short[], resolution as string, start as string), id as integer, type as string)),",
+						"          headers as [string,string]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     httpMethod: 'GET',",
+						"     timeout: 30,",
+						"     requestInterval: 0,",
+						"     paginationRules: ['supportRFC5988' -> 'true'],",
+						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'documentPerLine']) ~> source1",
+						"source1 derive(est_consumption = body.data.attributes.consumed_energy,",
+						"          date = addDays(toDate(body.data.attributes.start,'yyyy-MM-dd'),7)) ~> derivedColumn1",
+						"derivedColumn1 foldDown(unroll(body.data.attributes.consumed_energy),",
+						"     mapColumn(",
+						"          est_consumption = body.data.attributes.consumed_energy,",
+						"          date",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenConsumedEnergy",
+						"AddConstantColumn window(over(constant),",
+						"     asc(constant, true),",
+						"     hour = rowNumber()-1) ~> AddAsHourBasedOnRowNumber",
+						"flattenConsumedEnergy derive(constant = 1) ~> AddConstantColumn",
+						"AddIdCol alterRow(upsertIf(true())) ~> AlterRow1",
+						"AddAsHourBasedOnRowNumber derive(id = concat(\r",
+						"    replace(toString(date), '-', ''),\r",
+						"    '_',\r",
+						"    toString(hour)\r",
+						")) ~> AddIdCol",
+						"AlterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as integer,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['id'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          id,",
+						"          date,",
+						"          hour,",
+						"          est_consumption",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/RestResourceBatteryStat')]",
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
 			]
 		},
 		{
@@ -1322,308 +1653,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
 				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/chargePlanTable')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "SqlDbBattChargePlan",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "id",
-						"type": "nvarchar"
-					},
-					{
-						"name": "date",
-						"type": "date"
-					},
-					{
-						"name": "hour",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "est_consumption",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "est_production",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "surplus_production",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "charge_potential",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "charge_trigger",
-						"type": "bit"
-					},
-					{
-						"name": "charging",
-						"type": "bit"
-					},
-					{
-						"name": "accumulated_charge",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "elspotprice_dkk",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "surplus_sellable_production",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "sale_potential_dkk",
-						"type": "int",
-						"precision": 10
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "chargeplan"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/SqlDbBattChargePlan')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/daily_elspotprices')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "elspotprices-loaddata",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2022-05-31T00:20:00",
-						"timeZone": "Romance Standard Time",
-						"schedule": {
-							"minutes": [
-								25
-							],
-							"hours": [
-								2
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/elspotprices-loaddata')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/battery-stat-loaddata')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "batterystat dataflow",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "1.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "batterystat dataflow",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"source1": {},
-									"sink1": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/batterystat dataflow')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/batterystat dataflow')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "RestResourceBatteryStat",
-								"type": "DatasetReference"
-							},
-							"name": "source1"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "chargePlanTable",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "derivedColumn1"
-						},
-						{
-							"name": "flattenConsumedEnergy"
-						},
-						{
-							"name": "AddAsHourBasedOnRowNumber"
-						},
-						{
-							"name": "AddConstantColumn"
-						},
-						{
-							"name": "AlterRow1"
-						},
-						{
-							"name": "AddIdCol"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          body as (data as (attributes as (battery_charged_energy as short[], battery_discharged_energy as short[], consumed_energy as short[], direct_usage_energy as short[], end as string, grid_feedin_energy as short[], grid_purchase_energy as short[], measurement_method as string, produced_energy as short[], resolution as string, start as string), id as integer, type as string)),",
-						"          headers as [string,string]",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     httpMethod: 'GET',",
-						"     timeout: 30,",
-						"     requestInterval: 0,",
-						"     paginationRules: ['supportRFC5988' -> 'true'],",
-						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'documentPerLine']) ~> source1",
-						"source1 derive(est_consumption = body.data.attributes.consumed_energy,",
-						"          date = addDays(toDate(body.data.attributes.start,'yyyy-MM-dd'),7)) ~> derivedColumn1",
-						"derivedColumn1 foldDown(unroll(body.data.attributes.consumed_energy),",
-						"     mapColumn(",
-						"          est_consumption = body.data.attributes.consumed_energy,",
-						"          date",
-						"     ),",
-						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flattenConsumedEnergy",
-						"AddConstantColumn window(over(constant),",
-						"     asc(constant, true),",
-						"     hour = rowNumber()-1) ~> AddAsHourBasedOnRowNumber",
-						"flattenConsumedEnergy derive(constant = 1) ~> AddConstantColumn",
-						"AddIdCol alterRow(upsertIf(true())) ~> AlterRow1",
-						"AddAsHourBasedOnRowNumber derive(id = concat(\r",
-						"    replace(toString(date), '-', ''),\r",
-						"    '_',\r",
-						"    toString(hour)\r",
-						")) ~> AddIdCol",
-						"AlterRow1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          id as string,",
-						"          date as date,",
-						"          hour as integer,",
-						"          est_consumption as integer,",
-						"          est_production as integer,",
-						"          surplus_production as integer,",
-						"          charge_potential as integer,",
-						"          charge_trigger as boolean,",
-						"          charging as boolean,",
-						"          accumulated_charge as double,",
-						"          elspotprice_dkk as double,",
-						"          surplus_sellable_production as integer,",
-						"          sale_potential_dkk as integer",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:true,",
-						"     keys:['id'],",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     mapColumn(",
-						"          id,",
-						"          date,",
-						"          hour,",
-						"          est_consumption",
-						"     )) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/RestResourceBatteryStat')]",
-				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/RestResourceBatteryStat')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "RestServiceSonnenBattery",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "RestResource",
-				"typeProperties": {},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/RestServiceSonnenBattery')]"
 			]
 		}
 	]
