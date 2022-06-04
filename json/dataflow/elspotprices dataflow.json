@@ -33,10 +33,6 @@
 				}
 			],
 			"scriptLines": [
-				"parameters{",
-				"     todayStr as string (toString(currentDate(\"UTC\"))),",
-				"     tomorrowStr as string (toString(addDays(currentDate(\"UTC\"), 1)))",
-				"}",
 				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     httpMethod: 'GET',",
