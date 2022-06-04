@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "TblElSpotPrices",
+						"referenceName": "chargePlanTable",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -30,10 +30,17 @@
 				},
 				{
 					"name": "derivedColumn1"
+				},
+				{
+					"name": "AlterRow1"
 				}
 			],
 			"scriptLines": [
-				"source(allowSchemaDrift: true,",
+				"source(output(",
+				"          body as (help as string, result as (fields as (id as string, type as string)[], records as (HourDK as string, HourUTC as string, PriceArea as string, SpotPriceDKK as double, SpotPriceEUR as double, {_full_text} as string, {_id} as integer)[], sql as string), success as boolean),",
+				"          headers as [string,string]",
+				"     ),",
+				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     httpMethod: 'GET',",
 				"     timeout: 30,",
@@ -53,23 +60,45 @@
 				"     ),",
 				"     skipDuplicateMapInputs: false,",
 				"     skipDuplicateMapOutputs: false) ~> flatten1",
-				"flatten1 derive(HourUTC = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss', 'UTC', 'en-US'),",
-				"          HourDK = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss')) ~> derivedColumn1",
-				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"flatten1 derive(date = toDate(HourDK,'yyyy-MM-dd'),",
+				"          hour = hour(toTimestamp(replace(HourDK,'T',' '))),",
+				"          id = concat(\r",
+				"    replace(toString(toDate(HourDK,'yyyy-MM-dd')),'-',''),\r",
+				"    '_',\r",
+				"    toString(hour(toTimestamp(replace(HourDK,'T',' '))))\r",
+				"    )) ~> derivedColumn1",
+				"derivedColumn1 alterRow(upsertIf(true())) ~> AlterRow1",
+				"AlterRow1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     input(",
+				"          id as string,",
+				"          date as date,",
+				"          hour as integer,",
+				"          est_consumption as integer,",
+				"          est_production as integer,",
+				"          surplus_production as integer,",
+				"          charge_potential as integer,",
+				"          charge_trigger as boolean,",
+				"          charging as boolean,",
+				"          accumulated_charge as double,",
+				"          elspotprice_dkk as double,",
+				"          surplus_sellable_production as integer,",
+				"          sale_potential_dkk as integer",
+				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
 				"     updateable:false,",
-				"     upsertable:false,",
+				"     upsertable:true,",
+				"     keys:['id'],",
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          hour_dk = HourDK,",
-				"          hour_utc = HourUTC,",
-				"          SpotPriceDKK,",
-				"          SpotPriceEUR",
+				"          id,",
+				"          date,",
+				"          hour,",
+				"          elspotprice_dkk = SpotPriceDKK",
 				"     )) ~> sink1"
 			]
 		}
