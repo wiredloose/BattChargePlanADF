@@ -36,6 +36,9 @@
 				}
 			],
 			"scriptLines": [
+				"parameters{",
+				"     parameter1 as string (\"0\")",
+				"}",
 				"source(output(",
 				"          body as (help as string, result as (fields as (id as string, type as string)[], records as (HourDK as string, HourUTC as string, PriceArea as string, SpotPriceDKK as double, SpotPriceEUR as double, {_full_text} as string, {_id} as integer)[], sql as string), success as boolean),",
 				"          headers as [string,string]",
