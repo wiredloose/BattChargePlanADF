@@ -1,0 +1,78 @@
+{
+	"name": "chargePlanTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlDbBattChargePlan",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "date",
+				"type": "date"
+			},
+			{
+				"name": "hour",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "est_consumption",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "est_production",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "surplus_production",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "charge_potential",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "charge_trigger",
+				"type": "bit"
+			},
+			{
+				"name": "charging",
+				"type": "bit"
+			},
+			{
+				"name": "accumulated_charge",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "elspotprice_dkk",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "surplus_sellable_production",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "sale_potential_dkk",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "chargeplan"
+		}
+	}
+}

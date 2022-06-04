@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "TestTbl2",
+						"referenceName": "chargePlanTable",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -27,6 +27,12 @@
 				},
 				{
 					"name": "flatten1"
+				},
+				{
+					"name": "addDbColumns"
+				},
+				{
+					"name": "AlterRow1"
 				}
 			],
 			"scriptLines": [
@@ -79,24 +85,41 @@
 				"     ),",
 				"     skipDuplicateMapInputs: false,",
 				"     skipDuplicateMapOutputs: false) ~> flatten1",
-				"flatten1 sink(allowSchemaDrift: true,",
+				"flatten1 derive(id = concat(replace(toString(toDate(datetime, \"yyyy-MM-dd\")),\"-\",\"\"), \"_\", toString(hour(toTimestamp(datetime)))),",
+				"          date = toDate(datetime, \"yyyy-MM-dd\"),",
+				"          hour = hour(toTimestamp(datetime))) ~> addDbColumns",
+				"addDbColumns alterRow(upsertIf(true())) ~> AlterRow1",
+				"AlterRow1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          date_1 as string,",
-				"          watts as integer,",
-				"          watt_hours as integer",
+				"          id as string,",
+				"          date as date,",
+				"          hour as integer,",
+				"          est_consumption as integer,",
+				"          est_production as integer,",
+				"          surplus_production as integer,",
+				"          charge_potential as integer,",
+				"          charge_trigger as boolean,",
+				"          charging as boolean,",
+				"          accumulated_charge as double,",
+				"          elspotprice_dkk as double,",
+				"          surplus_sellable_production as integer,",
+				"          sale_potential_dkk as integer",
 				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
 				"     updateable:false,",
-				"     upsertable:false,",
+				"     upsertable:true,",
+				"     keys:['id'],",
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          date_1 = datetime,",
-				"          watts = watt",
+				"          id,",
+				"          date,",
+				"          hour,",
+				"          est_production = watt",
 				"     )) ~> sink1"
 			]
 		}
