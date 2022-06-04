@@ -13,6 +13,116 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/elspotprices dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "RestResourceElSpotPrices",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "flatten1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "AlterRow1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          body as (help as string, result as (fields as (id as string, type as string)[], records as (HourDK as string, HourUTC as string, PriceArea as string, SpotPriceDKK as double, SpotPriceEUR as double, {_full_text} as string, {_id} as integer)[], sql as string), success as boolean),",
+						"          headers as [string,string]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     httpMethod: 'GET',",
+						"     timeout: 30,",
+						"     requestInterval: 0,",
+						"     paginationRules: ['supportRFC5988' -> 'true'],",
+						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> source1",
+						"source1 select(mapColumn(",
+						"          records = body.result.records",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 foldDown(unroll(records),",
+						"     mapColumn(",
+						"          HourDK = records.HourDK,",
+						"          HourUTC = records.HourUTC,",
+						"          SpotPriceDKK = records.SpotPriceDKK,",
+						"          SpotPriceEUR = records.SpotPriceEUR",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flatten1",
+						"flatten1 derive(date = toDate(HourDK,'yyyy-MM-dd'),",
+						"          hour = hour(toTimestamp(replace(HourDK,'T',' '))),",
+						"          id = concat(\r",
+						"    replace(toString(toDate(HourDK,'yyyy-MM-dd')),'-',''),\r",
+						"    '_',\r",
+						"    toString(hour(toTimestamp(replace(HourDK,'T',' '))))\r",
+						"    )) ~> derivedColumn1",
+						"derivedColumn1 alterRow(upsertIf(true())) ~> AlterRow1",
+						"AlterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as integer,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['id'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          id,",
+						"          date,",
+						"          hour,",
+						"          elspotprice_dkk = SpotPriceDKK",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/forecastsolar dataflow')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -143,6 +253,119 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/batterystat dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "RestResourceBatteryStat",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "flattenConsumedEnergy"
+						},
+						{
+							"name": "AddAsHourBasedOnRowNumber"
+						},
+						{
+							"name": "AddConstantColumn"
+						},
+						{
+							"name": "AlterRow1"
+						},
+						{
+							"name": "AddIdCol"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          body as (data as (attributes as (battery_charged_energy as short[], battery_discharged_energy as short[], consumed_energy as short[], direct_usage_energy as short[], end as string, grid_feedin_energy as short[], grid_purchase_energy as short[], measurement_method as string, produced_energy as short[], resolution as string, start as string), id as integer, type as string)),",
+						"          headers as [string,string]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     httpMethod: 'GET',",
+						"     timeout: 30,",
+						"     requestInterval: 0,",
+						"     paginationRules: ['supportRFC5988' -> 'true'],",
+						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'documentPerLine']) ~> source1",
+						"source1 derive(est_consumption = body.data.attributes.consumed_energy,",
+						"          date = addDays(toDate(body.data.attributes.start,'yyyy-MM-dd'),7)) ~> derivedColumn1",
+						"derivedColumn1 foldDown(unroll(body.data.attributes.consumed_energy),",
+						"     mapColumn(",
+						"          est_consumption = body.data.attributes.consumed_energy,",
+						"          date",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenConsumedEnergy",
+						"AddConstantColumn window(over(constant),",
+						"     asc(constant, true),",
+						"     hour = rowNumber()-1) ~> AddAsHourBasedOnRowNumber",
+						"flattenConsumedEnergy derive(constant = 1) ~> AddConstantColumn",
+						"AddIdCol alterRow(upsertIf(true())) ~> AlterRow1",
+						"AddAsHourBasedOnRowNumber derive(id = concat(\r",
+						"    replace(toString(date), '-', ''),\r",
+						"    '_',\r",
+						"    toString(hour)\r",
+						")) ~> AddIdCol",
+						"AlterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as integer,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['id'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          id,",
+						"          date,",
+						"          hour,",
+						"          est_consumption",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/elspotprices-loaddata')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -186,7 +409,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/elspotprices dataflow')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/forecast-solar-loaddata')]",
@@ -550,6 +775,53 @@
 				"annotations": []
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/battery-stat-loaddata')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "batterystat dataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "batterystat dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/batterystat dataflow')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/daily')]",

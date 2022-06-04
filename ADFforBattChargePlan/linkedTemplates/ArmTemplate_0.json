@@ -37,7 +37,7 @@
 		},
 		"RestServiceSonnenBattery_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-05-25T00:00:00+02:00&filter[end]=2022-05-25T23:59:59+02:00&filter[resolution]=1-hour"
+			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-05-28T00:00:00+02:00&filter[end]=2022-05-28T23:59:59+02:00&filter[resolution]=1-hour"
 		},
 		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 			"type": "string",
@@ -504,6 +504,24 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/RestResourceBatteryStat')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "RestServiceSonnenBattery",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/RestServiceSonnenBattery')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -706,118 +724,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
 				"[concat(variables('factoryId'), '/datasets/TestTbl2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/elspotprices dataflow')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "RestResourceElSpotPrices",
-								"type": "DatasetReference"
-							},
-							"name": "source1"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "chargePlanTable",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "select1"
-						},
-						{
-							"name": "flatten1"
-						},
-						{
-							"name": "derivedColumn1"
-						},
-						{
-							"name": "AlterRow1"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          body as (help as string, result as (fields as (id as string, type as string)[], records as (HourDK as string, HourUTC as string, PriceArea as string, SpotPriceDKK as double, SpotPriceEUR as double, {_full_text} as string, {_id} as integer)[], sql as string), success as boolean),",
-						"          headers as [string,string]",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     httpMethod: 'GET',",
-						"     timeout: 30,",
-						"     paginationRules: ['supportRFC5988' -> 'true'],",
-						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> source1",
-						"source1 select(mapColumn(",
-						"          records = body.result.records",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> select1",
-						"select1 foldDown(unroll(records),",
-						"     mapColumn(",
-						"          HourDK = records.HourDK,",
-						"          HourUTC = records.HourUTC,",
-						"          SpotPriceDKK = records.SpotPriceDKK,",
-						"          SpotPriceEUR = records.SpotPriceEUR",
-						"     ),",
-						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flatten1",
-						"flatten1 derive(date = toDate(HourDK,'yyyy-MM-dd'),",
-						"          hour = hour(toTimestamp(replace(HourDK,'T',' '))),",
-						"          id = concat(\r",
-						"    replace(toString(toDate(HourDK,'yyyy-MM-dd')),'-',''),\r",
-						"    '_',\r",
-						"    toString(hour(toTimestamp(replace(HourDK,'T',' '))))\r",
-						"    )) ~> derivedColumn1",
-						"derivedColumn1 alterRow(upsertIf(true())) ~> AlterRow1",
-						"AlterRow1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          id as string,",
-						"          date as date,",
-						"          hour as integer,",
-						"          est_consumption as integer,",
-						"          est_production as integer,",
-						"          surplus_production as integer,",
-						"          charge_potential as integer,",
-						"          charge_trigger as boolean,",
-						"          charging as boolean,",
-						"          accumulated_charge as double,",
-						"          elspotprice_dkk as double,",
-						"          surplus_sellable_production as integer,",
-						"          sale_potential_dkk as integer",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:true,",
-						"     keys:['id'],",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     mapColumn(",
-						"          id,",
-						"          date,",
-						"          hour,",
-						"          elspotprice_dkk = SpotPriceDKK",
-						"     )) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/RestResourceElSpotPrices')]",
-				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
 			]
 		}
 	]

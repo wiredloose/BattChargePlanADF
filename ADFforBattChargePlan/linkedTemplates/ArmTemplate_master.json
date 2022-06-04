@@ -37,7 +37,7 @@
 		},
 		"RestServiceSonnenBattery_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-05-25T00:00:00+02:00&filter[end]=2022-05-25T23:59:59+02:00&filter[resolution]=1-hour"
+			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-05-28T00:00:00+02:00&filter[end]=2022-05-28T23:59:59+02:00&filter[resolution]=1-hour"
 		},
 		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 			"type": "string",
