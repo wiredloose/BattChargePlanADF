@@ -29,7 +29,7 @@
 		},
 		"ElSpotPrices_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://api.energidataservice.dk/datastore_search_sql?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22='DK1'%20AND%20%22HourUTC%22%3e='2022-05-27'%20AND%20%22HourUTC%22%3c'2022-05-28'%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050"
+			"defaultValue": "@{concat(\n'https://api.energidataservice.dk/datastore_search_sql',\n'?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22=''DK1''%20AND%20%22HourUTC%22%3e=''',\nutcNow('yyyy-MM-dd'),\n'''%20AND%20%22HourUTC%22%3c''',\ngetFutureTime(1, 'Day', 'yyyy-MM-dd'),\n'''%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050')}"
 		},
 		"ForecastSolar_properties_typeProperties_url": {
 			"type": "string",
@@ -97,6 +97,16 @@
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"parameters": {
+					"todayStr": {
+						"type": "String",
+						"defaultValue": "2022-05-27"
+					},
+					"tormorrowStr": {
+						"type": "String",
+						"defaultValue": "2022-05-28"
+					}
+				},
 				"annotations": [],
 				"type": "RestService",
 				"typeProperties": {
@@ -238,11 +248,26 @@
 			"properties": {
 				"linkedServiceName": {
 					"referenceName": "ElSpotPrices",
-					"type": "LinkedServiceReference"
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"todayStr": {
+							"value": "@utcNow('yyyy-MM-dd')",
+							"type": "Expression"
+						},
+						"tormorrowStr": {
+							"value": "@getFutureTime(1,'Day','yyyy-MM-dd')",
+							"type": "Expression"
+						}
+					}
 				},
 				"annotations": [],
 				"type": "RestResource",
-				"typeProperties": {},
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@concat(\n'https://api.energidataservice.dk/datastore_search_sql',\n'?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22=''DK1''%20AND%20%22HourUTC%22%3e=''',\nutcNow('yyyy-MM-dd'),\n'''%20AND%20%22HourUTC%22%3c''',\ngetFutureTime(1, 'Day', 'yyyy-MM-dd'),\n'''%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050')",
+						"type": "Expression"
+					}
+				},
 				"schema": []
 			},
 			"dependsOn": [
@@ -702,7 +727,7 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "TblElSpotPrices",
+								"referenceName": "chargePlanTable",
 								"type": "DatasetReference"
 							},
 							"name": "sink1"
@@ -717,6 +742,9 @@
 						},
 						{
 							"name": "derivedColumn1"
+						},
+						{
+							"name": "AlterRow1"
 						}
 					],
 					"scriptLines": [
@@ -728,7 +756,6 @@
 						"     validateSchema: false,",
 						"     httpMethod: 'GET',",
 						"     timeout: 30,",
-						"     requestInterval: 0,",
 						"     paginationRules: ['supportRFC5988' -> 'true'],",
 						"     responseFormat: ['type' -> 'json', 'documentForm' -> 'singleDocument']) ~> source1",
 						"source1 select(mapColumn(",
@@ -745,30 +772,52 @@
 						"     ),",
 						"     skipDuplicateMapInputs: false,",
 						"     skipDuplicateMapOutputs: false) ~> flatten1",
-						"flatten1 derive(HourUTC = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss', 'UTC', 'en-US'),",
-						"          HourDK = toTimestamp(HourUTC, 'yyyy-MM-dd\\'T\\'HH:mm:ss')) ~> derivedColumn1",
-						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"flatten1 derive(date = toDate(HourDK,'yyyy-MM-dd'),",
+						"          hour = hour(toTimestamp(replace(HourDK,'T',' '))),",
+						"          id = concat(\r",
+						"    replace(toString(toDate(HourDK,'yyyy-MM-dd')),'-',''),\r",
+						"    '_',\r",
+						"    toString(hour(toTimestamp(replace(HourDK,'T',' '))))\r",
+						"    )) ~> derivedColumn1",
+						"derivedColumn1 alterRow(upsertIf(true())) ~> AlterRow1",
+						"AlterRow1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
+						"     input(",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as integer,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as integer",
+						"     ),",
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['id'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          hour_dk = HourDK,",
-						"          hour_utc = HourUTC,",
-						"          SpotPriceDKK,",
-						"          SpotPriceEUR",
+						"          id,",
+						"          date,",
+						"          hour,",
+						"          elspotprice_dkk = SpotPriceDKK",
 						"     )) ~> sink1"
 					]
 				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/RestResourceElSpotPrices')]",
-				"[concat(variables('factoryId'), '/datasets/TblElSpotPrices')]"
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
 			]
 		}
 	]

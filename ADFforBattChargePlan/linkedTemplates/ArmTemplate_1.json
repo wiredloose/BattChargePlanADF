@@ -168,7 +168,8 @@
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
-								}
+								},
+								"linkedServiceParameters": {}
 							},
 							"staging": {},
 							"compute": {
@@ -586,6 +587,44 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/forecast-solar-loaddata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/daily_elspotprices')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "elspotprices-loaddata",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2022-05-31T00:20:00",
+						"timeZone": "Romance Standard Time",
+						"schedule": {
+							"minutes": [
+								25
+							],
+							"hours": [
+								2
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/elspotprices-loaddata')]"
 			]
 		}
 	]
