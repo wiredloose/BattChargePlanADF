@@ -35,6 +35,10 @@
 			"type": "string",
 			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
 		},
+		"RestServiceSonnenBattery_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-05-25T00:00:00+02:00&filter[end]=2022-05-25T23:59:59+02:00&filter[resolution]=1-hour"
+		},
 		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray"
@@ -120,12 +124,7 @@
 							"dataflow": {
 								"referenceName": "forecastsolar dataflow",
 								"type": "DataFlowReference",
-								"parameters": {
-									"func_output": {
-										"value": "@variables('objPropsToArr_output')",
-										"type": "Expression"
-									}
-								},
+								"parameters": {},
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
@@ -438,8 +437,7 @@
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
-								},
-								"linkedServiceParameters": {}
+								}
 							},
 							"staging": {},
 							"compute": {
@@ -467,6 +465,31 @@
 				"[concat(variables('factoryId'), '/datasets/TestTbl2')]",
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
 				"[concat(variables('factoryId'), '/dataflows/dataflow3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ForecastSolarJson')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BattChargePlanBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "forecastsolar.json",
+						"folderPath": "forecastsolar",
+						"container": "adf"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
 			]
 		},
 		{
@@ -743,6 +766,27 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/RestServiceSonnenBattery')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('RestServiceSonnenBattery_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous",
+					"authHeaders": {
+						"Authorization": {
+							"type": "SecureString",
+							"value": "**********"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/RestService_jsonStructObjToArray')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -769,6 +813,44 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/daily')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "forecast-solar-loaddata",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2022-05-31T00:54:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								0
+							],
+							"hours": [
+								6
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/forecast-solar-loaddata')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
@@ -863,6 +945,116 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/forecastedWattsBlob')]",
 				"[concat(variables('factoryId'), '/datasets/TestTbl1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow3')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ForecastSolarJson",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "TestTbl2",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "flatten1"
+						},
+						{
+							"name": "parse1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          JsonText as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine',",
+						"     backslashEscape: true) ~> source1",
+						"parse1 foldDown(unroll(JsonText.result.watts),",
+						"     mapColumn(",
+						"          datetime = JsonText.result.watts.datetime,",
+						"          watt = JsonText.result.watts.watt",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flatten1",
+						"source1 parse(JsonText = JsonText ? (result as (\r",
+						"     watts as (\r",
+						"          datetime as string,\r",
+						"          watt as integer\r",
+						"          )[],\r",
+						"     watt_hours as (\r",
+						"          datetime as string,\r",
+						"          watt as integer\r",
+						"          )[],\r",
+						"     watt_hours_day as (\r",
+						"          datetime as string,\r",
+						"          watt as integer\r",
+						"          )[]\r",
+						"     ),\r",
+						"\r",
+						"     message as (\r",
+						"          code as integer,\r",
+						"          type as string,\r",
+						"          text as string,\r",
+						"          info as (\r",
+						"               latitude as integer,\r",
+						"               longitude as integer,\r",
+						"               place as string,\r",
+						"               timezone as string\r",
+						"               ),\r",
+						"          ratelimit as (\r",
+						"               period as integer,\r",
+						"               limit as integer,\r",
+						"               remaining as integer\r",
+						"               )\r",
+						"          )\r",
+						"     )[],",
+						"     format: 'json',",
+						"     documentForm: 'documentPerLine') ~> parse1",
+						"flatten1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          date_1 as string,",
+						"          watts as integer,",
+						"          watt_hours as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          date_1 = datetime,",
+						"          watts = watt",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
+				"[concat(variables('factoryId'), '/datasets/TestTbl2')]"
 			]
 		},
 		{
@@ -987,9 +1179,6 @@
 						}
 					],
 					"scriptLines": [
-						"parameters{",
-						"     func_output as string (\"\\{result:\\{watts:[]}}\")",
-						"}",
 						"source(output(",
 						"          JsonText as string",
 						"     ),",
@@ -1064,179 +1253,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
 				"[concat(variables('factoryId'), '/datasets/TestTbl2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dataflow3')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ForecastSolarJson",
-								"type": "DatasetReference"
-							},
-							"name": "source1"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "TestTbl2",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "flatten1"
-						},
-						{
-							"name": "parse1"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          JsonText as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'documentPerLine',",
-						"     backslashEscape: true) ~> source1",
-						"parse1 foldDown(unroll(JsonText.result.watts),",
-						"     mapColumn(",
-						"          datetime = JsonText.result.watts.datetime,",
-						"          watt = JsonText.result.watts.watt",
-						"     ),",
-						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flatten1",
-						"source1 parse(JsonText = JsonText ? (result as (\r",
-						"     watts as (\r",
-						"          datetime as string,\r",
-						"          watt as integer\r",
-						"          )[],\r",
-						"     watt_hours as (\r",
-						"          datetime as string,\r",
-						"          watt as integer\r",
-						"          )[],\r",
-						"     watt_hours_day as (\r",
-						"          datetime as string,\r",
-						"          watt as integer\r",
-						"          )[]\r",
-						"     ),\r",
-						"\r",
-						"     message as (\r",
-						"          code as integer,\r",
-						"          type as string,\r",
-						"          text as string,\r",
-						"          info as (\r",
-						"               latitude as integer,\r",
-						"               longitude as integer,\r",
-						"               place as string,\r",
-						"               timezone as string\r",
-						"               ),\r",
-						"          ratelimit as (\r",
-						"               period as integer,\r",
-						"               limit as integer,\r",
-						"               remaining as integer\r",
-						"               )\r",
-						"          )\r",
-						"     )[],",
-						"     format: 'json',",
-						"     documentForm: 'documentPerLine') ~> parse1",
-						"flatten1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          date_1 as string,",
-						"          watts as integer,",
-						"          watt_hours as integer",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     mapColumn(",
-						"          date_1 = datetime,",
-						"          watts = watt",
-						"     )) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
-				"[concat(variables('factoryId'), '/datasets/TestTbl2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ForecastSolarJson')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "BattChargePlanBlobStorage1",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "forecastsolar.json",
-						"folderPath": "forecastsolar",
-						"container": "adf"
-					}
-				},
-				"schema": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/daily')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "forecast-solar-loaddata",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2022-05-31T00:54:00Z",
-						"timeZone": "UTC",
-						"schedule": {
-							"minutes": [
-								0
-							],
-							"hours": [
-								6
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/forecast-solar-loaddata')]"
 			]
 		}
 	]
