@@ -1,0 +1,12 @@
+{
+	"name": "RestResourceBatteryStat",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "RestServiceSonnenBattery",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	}
+}
