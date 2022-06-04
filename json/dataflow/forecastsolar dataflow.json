@@ -36,10 +36,7 @@
 				}
 			],
 			"scriptLines": [
-				"source(output(",
-				"          JsonText as string",
-				"     ),",
-				"     allowSchemaDrift: true,",
+				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
 				"     documentForm: 'documentPerLine',",
