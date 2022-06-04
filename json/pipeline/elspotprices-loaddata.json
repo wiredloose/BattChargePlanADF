@@ -17,10 +17,7 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "elspotprices dataflow",
-						"type": "DataFlowReference",
-						"parameters": {
-							"parameter1": "\"0\""
-						}
+						"type": "DataFlowReference"
 					},
 					"compute": {
 						"coreCount": 8,
