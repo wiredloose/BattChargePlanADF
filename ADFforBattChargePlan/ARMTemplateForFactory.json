@@ -128,7 +128,8 @@
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
-								}
+								},
+								"linkedServiceParameters": {}
 							},
 							"staging": {},
 							"compute": {
@@ -839,10 +840,10 @@
 						"timeZone": "UTC",
 						"schedule": {
 							"minutes": [
-								0
+								15
 							],
 							"hours": [
-								6
+								2
 							]
 						}
 					}
@@ -1164,7 +1165,7 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "TestTbl2",
+								"referenceName": "chargePlanTable",
 								"type": "DatasetReference"
 							},
 							"name": "sink1"
@@ -1176,6 +1177,12 @@
 						},
 						{
 							"name": "flatten1"
+						},
+						{
+							"name": "addDbColumns"
+						},
+						{
+							"name": "AlterRow1"
 						}
 					],
 					"scriptLines": [
@@ -1228,31 +1235,131 @@
 						"     ),",
 						"     skipDuplicateMapInputs: false,",
 						"     skipDuplicateMapOutputs: false) ~> flatten1",
-						"flatten1 sink(allowSchemaDrift: true,",
+						"flatten1 derive(id = concat(replace(toString(toDate(datetime, \"yyyy-MM-dd\")),\"-\",\"\"), \"_\", toString(hour(toTimestamp(datetime)))),",
+						"          date = toDate(datetime, \"yyyy-MM-dd\"),",
+						"          hour = hour(toTimestamp(datetime))) ~> addDbColumns",
+						"addDbColumns alterRow(upsertIf(true())) ~> AlterRow1",
+						"AlterRow1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
-						"          date_1 as string,",
-						"          watts as integer,",
-						"          watt_hours as integer",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as integer,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as integer",
 						"     ),",
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['id'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          date_1 = datetime,",
-						"          watts = watt",
+						"          id,",
+						"          date,",
+						"          hour,",
+						"          est_production = watt",
 						"     )) ~> sink1"
 					]
 				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
-				"[concat(variables('factoryId'), '/datasets/TestTbl2')]"
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/chargePlanTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlDbBattChargePlan",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "date",
+						"type": "date"
+					},
+					{
+						"name": "hour",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_consumption",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surplus_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_potential",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_trigger",
+						"type": "bit"
+					},
+					{
+						"name": "charging",
+						"type": "bit"
+					},
+					{
+						"name": "accumulated_charge",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "elspotprice_dkk",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "surplus_sellable_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "sale_potential_dkk",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "chargeplan"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SqlDbBattChargePlan')]"
 			]
 		}
 	]

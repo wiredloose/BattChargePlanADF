@@ -396,6 +396,89 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/chargePlanTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlDbBattChargePlan",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "date",
+						"type": "date"
+					},
+					{
+						"name": "hour",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_consumption",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surplus_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_potential",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_trigger",
+						"type": "bit"
+					},
+					{
+						"name": "charging",
+						"type": "bit"
+					},
+					{
+						"name": "accumulated_charge",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "elspotprice_dkk",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "surplus_sellable_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "sale_potential_dkk",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "chargeplan"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SqlDbBattChargePlan')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -686,116 +769,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/RestResourceElSpotPrices')]",
 				"[concat(variables('factoryId'), '/datasets/TblElSpotPrices')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/forecastsolar dataflow')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ForecastSolarJson",
-								"type": "DatasetReference"
-							},
-							"name": "source1"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "TestTbl2",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "parse1"
-						},
-						{
-							"name": "flatten1"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          JsonText as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'documentPerLine',",
-						"     backslashEscape: true) ~> source1",
-						"source1 parse(JsonText = JsonText ? (result as (\r",
-						"     watts as (\r",
-						"          datetime as string,\r",
-						"          watt as integer\r",
-						"          )[],\r",
-						"     watt_hours as (\r",
-						"          datetime as string,\r",
-						"          watt as integer\r",
-						"          )[],\r",
-						"     watt_hours_day as (\r",
-						"          datetime as string,\r",
-						"          watt as integer\r",
-						"          )[]\r",
-						"     ),\r",
-						"\r",
-						"     message as (\r",
-						"          code as integer,\r",
-						"          type as string,\r",
-						"          text as string,\r",
-						"          info as (\r",
-						"               latitude as integer,\r",
-						"               longitude as integer,\r",
-						"               place as string,\r",
-						"               timezone as string\r",
-						"               ),\r",
-						"          ratelimit as (\r",
-						"               period as integer,\r",
-						"               limit as integer,\r",
-						"               remaining as integer\r",
-						"               )\r",
-						"          )\r",
-						"     )[],",
-						"     format: 'json',",
-						"     documentForm: 'documentPerLine') ~> parse1",
-						"parse1 foldDown(unroll(JsonText.result.watts),",
-						"     mapColumn(",
-						"          datetime = JsonText.result.watts.datetime,",
-						"          watt = JsonText.result.watts.watt",
-						"     ),",
-						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flatten1",
-						"flatten1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          date_1 as string,",
-						"          watts as integer,",
-						"          watt_hours as integer",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     mapColumn(",
-						"          date_1 = datetime,",
-						"          watts = watt",
-						"     )) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
-				"[concat(variables('factoryId'), '/datasets/TestTbl2')]"
 			]
 		}
 	]
