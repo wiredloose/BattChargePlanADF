@@ -56,7 +56,7 @@
 				"aggregate1 derive(objArrStr = toString(objArr)) ~> derivedColumn1",
 				"derivedColumn1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['getchargeplan.json'],",
+				"     partitionFileNames:['chargeplan.json'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     mapColumn(",
