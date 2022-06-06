@@ -3,34 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Web azfunc chargeplanning",
-				"type": "WebActivity",
-				"dependsOn": [
-					{
-						"activity": "get chargeplan dataflow",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "7.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
-					"method": "POST",
-					"body": {
-						"value": "@activity('get chargeplan').output",
-						"type": "Expression"
-					}
-				}
-			},
-			{
 				"name": "get chargeplan dataflow",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
