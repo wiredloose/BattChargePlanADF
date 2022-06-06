@@ -53,14 +53,14 @@
 				"     query: 'SELECT TOP 50 [id]\\n      ,[date]\\n      ,[hour]\\n      ,[est_consumption]\\n      ,[est_production]\\n      ,[surplus_production]\\n      ,[charge_potential]\\n      ,[charge_trigger]\\n      ,[charging]\\n      ,[accumulated_charge]\\n      ,[elspotprice_dkk]\\n      ,[surplus_sellable_production]\\n      ,[sale_potential_dkk] \\n      ,[elspotprice_eur]\\n      ,[sale_potential_eur]          \\n  FROM [dbo].[chargeplan] \\n  WHERE[date] = CONVERT (date, GETDATE())\\n  ORDER BY [hour] ASC',",
 				"     format: 'query') ~> source1",
 				"source1 aggregate(objArr = collect(@(id, date, hour, est_consumption, est_production, surplus_production, charge_potential, charge_trigger, charging, accumulated_charge, elspotprice_dkk, surplus_sellable_production, sale_potential_dkk, elspotprice_eur, sale_potential_eur) )) ~> aggregate1",
-				"aggregate1 derive(objArrStr = toString(objArr)) ~> derivedColumn1",
+				"aggregate1 derive(chargeplan = toString(objArr)) ~> derivedColumn1",
 				"derivedColumn1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:['chargeplan.json'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     mapColumn(",
-				"          objArrStr",
+				"          objArrStr = chargeplan",
 				"     ),",
 				"     partitionBy('hash', 1)) ~> sink1"
 			]
