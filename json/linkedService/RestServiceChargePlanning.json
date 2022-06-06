@@ -1,0 +1,12 @@
+{
+	"name": "RestServiceChargePlanning",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
