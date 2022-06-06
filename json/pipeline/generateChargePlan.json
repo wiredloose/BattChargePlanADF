@@ -3,69 +3,9 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "get chargeplan",
-				"type": "Copy",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "7.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[est_consumption]\n      ,[est_production]\n      ,[surplus_production]\n      ,[charge_potential]\n      ,[charge_trigger]\n      ,[charging]\n      ,[accumulated_charge]\n      ,[elspotprice_dkk]\n      ,[surplus_sellable_production]\n      ,[sale_potential_dkk] \n      ,[elspotprice_eur]\n      ,[sale_potential_eur]          \n  FROM [dbo].[chargeplan] \n  WHERE[date] = '2022-06-06'\n  ORDER BY [hour] ASC;",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"sink": {
-						"type": "JsonSink",
-						"storeSettings": {
-							"type": "AzureBlobStorageWriteSettings"
-						},
-						"formatSettings": {
-							"type": "JsonWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"sink": {
-									"path": "$['Column_1']"
-								}
-							}
-						]
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "chargePlanTable",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "getChargePlan",
-						"type": "DatasetReference"
-					}
-				]
-			},
-			{
 				"name": "Web azfunc chargeplanning",
 				"type": "WebActivity",
-				"dependsOn": [
-					{
-						"activity": "get chargeplan",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
@@ -81,6 +21,26 @@
 						"value": "@activity('get chargeplan').output",
 						"type": "Expression"
 					}
+				}
+			},
+			{
+				"name": "get chargeplan dataflow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "1.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
 				}
 			}
 		],
