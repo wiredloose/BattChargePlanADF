@@ -631,12 +631,7 @@
 				},
 				"annotations": [],
 				"type": "RestResource",
-				"typeProperties": {
-					"relativeUrl": {
-						"value": "@concat(\n'https://api.energidataservice.dk/datastore_search_sql',\n'?sql=SELECT%20*%20from%20%22elspotprices%22%20WHERE%20%22PriceArea%22=''DK1''%20AND%20%22HourUTC%22%3e=''',\nutcNow('yyyy-MM-dd'),\n'''%20AND%20%22HourUTC%22%3c''',\ngetFutureTime(1, 'Day', 'yyyy-MM-dd'),\n'''%20ORDER%20BY%20%22HourUTC%22%20ASC%20LIMIT%2050')",
-						"type": "Expression"
-					}
-				},
+				"typeProperties": {},
 				"schema": []
 			},
 			"dependsOn": [
