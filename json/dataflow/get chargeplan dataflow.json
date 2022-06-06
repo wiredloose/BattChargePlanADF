@@ -60,7 +60,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     mapColumn(",
-				"          objArrStr = chargeplan",
+				"          chargeplan",
 				"     ),",
 				"     partitionBy('hash', 1)) ~> sink1"
 			]
