@@ -112,31 +112,6 @@
 					},
 					"ifTrueActivities": [
 						{
-							"name": "generate Charge Plan",
-							"type": "AzureFunctionActivity",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"functionName": "ChargePlanning",
-								"method": "POST",
-								"body": {
-									"value": "@variables('varChargePlanJson')",
-									"type": "Expression"
-								}
-							},
-							"linkedServiceName": {
-								"referenceName": "generateChargePlan",
-								"type": "LinkedServiceReference"
-							}
-						},
-						{
 							"name": "gen chargeplan",
 							"type": "WebActivity",
 							"dependsOn": [],
@@ -151,6 +126,10 @@
 							"typeProperties": {
 								"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
 								"method": "POST",
+								"body": {
+									"value": "@json(variables('varChargePlanJson'))",
+									"type": "Expression"
+								},
 								"datasets": [
 									{
 										"referenceName": "getChargePlan",
