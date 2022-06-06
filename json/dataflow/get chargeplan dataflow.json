@@ -35,7 +35,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT TOP 50 [id]\\n      ,[date]\\n      ,[hour]\\n      ,[est_consumption]\\n      ,[est_production]\\n      ,[surplus_production]\\n      ,[charge_potential]\\n      ,[charge_trigger]\\n      ,[charging]\\n      ,[accumulated_charge]\\n      ,[elspotprice_dkk]\\n      ,[surplus_sellable_production]\\n      ,[sale_potential_dkk] \\n      ,[elspotprice_eur]\\n      ,[sale_potential_eur]          \\n  FROM [dbo].[chargeplan] \\n  WHERE[date] = CONVERT (date, GETDATE())\\n  ORDER BY [hour] ASC;',",
+				"     query: 'SELECT [id]\\n      ,[date]\\n      ,[hour]\\n      ,[est_consumption]\\n      ,[est_production]\\n      ,[surplus_production]\\n      ,[charge_potential]\\n      ,[charge_trigger]\\n      ,[charging]\\n      ,[accumulated_charge]\\n      ,[elspotprice_dkk]\\n      ,[surplus_sellable_production]\\n      ,[sale_potential_dkk] \\n      ,[elspotprice_eur]\\n      ,[sale_potential_eur]          \\n  FROM [dbo].[chargeplan] \\n  WHERE[date] = CONVERT (date, GETDATE())\\n  ORDER BY [hour] ASC',",
 				"     format: 'query') ~> source1"
 			]
 		}
