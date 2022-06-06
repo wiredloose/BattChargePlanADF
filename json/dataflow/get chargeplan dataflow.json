@@ -1,13 +1,42 @@
 {
-	"name": "generate chargeplan dataflow",
+	"name": "get chargeplan dataflow",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
-			"sources": [],
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "chargePlanTable",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
 			"sinks": [],
 			"transformations": [],
 			"scriptLines": [
-				""
+				"source(output(",
+				"          id as string,",
+				"          date as date,",
+				"          hour as integer,",
+				"          est_consumption as integer,",
+				"          est_production as integer,",
+				"          surplus_production as integer,",
+				"          charge_potential as double,",
+				"          charge_trigger as boolean,",
+				"          charging as boolean,",
+				"          accumulated_charge as double,",
+				"          elspotprice_dkk as double,",
+				"          surplus_sellable_production as integer,",
+				"          sale_potential_dkk as double,",
+				"          elspotprice_eur as double,",
+				"          sale_potential_eur as double",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT TOP 50 [id]\\n      ,[date]\\n      ,[hour]\\n      ,[est_consumption]\\n      ,[est_production]\\n      ,[surplus_production]\\n      ,[charge_potential]\\n      ,[charge_trigger]\\n      ,[charging]\\n      ,[accumulated_charge]\\n      ,[elspotprice_dkk]\\n      ,[surplus_sellable_production]\\n      ,[sale_potential_dkk] \\n      ,[elspotprice_eur]\\n      ,[sale_potential_eur]          \\n  FROM [dbo].[chargeplan] \\n  WHERE[date] = CONVERT (date, GETDATE())\\n  ORDER BY [hour] ASC;',",
+				"     format: 'query') ~> source1"
 			]
 		}
 	}
