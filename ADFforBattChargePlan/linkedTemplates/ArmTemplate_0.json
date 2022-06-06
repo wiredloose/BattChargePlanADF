@@ -474,8 +474,8 @@
 					},
 					{
 						"name": "charge_potential",
-						"type": "int",
-						"precision": 10
+						"type": "float",
+						"precision": 15
 					},
 					{
 						"name": "charge_trigger",
@@ -502,8 +502,18 @@
 					},
 					{
 						"name": "sale_potential_dkk",
-						"type": "int",
-						"precision": 10
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "elspotprice_eur",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "sale_potential_eur",
+						"type": "float",
+						"precision": 15
 					}
 				],
 				"typeProperties": {
@@ -626,13 +636,15 @@
 						"          est_consumption as integer,",
 						"          est_production as integer,",
 						"          surplus_production as integer,",
-						"          charge_potential as integer,",
+						"          charge_potential as double,",
 						"          charge_trigger as boolean,",
 						"          charging as boolean,",
 						"          accumulated_charge as double,",
 						"          elspotprice_dkk as double,",
 						"          surplus_sellable_production as integer,",
-						"          sale_potential_dkk as integer",
+						"          sale_potential_dkk as double,",
+						"          elspotprice_eur as double,",
+						"          sale_potential_eur as double",
 						"     ),",
 						"     deletable:false,",
 						"     insertable:true,",
