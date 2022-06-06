@@ -17,7 +17,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
-						"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[est_consumption]\n      ,[est_production]\n      ,[surplus_production]\n      ,[charge_potential]\n      ,[charge_trigger]\n      ,[charging]\n      ,[accumulated_charge]\n      ,[elspotprice_dkk]\n      ,[surplus_sellable_production]\n      ,[sale_potential_dkk] \n      ,[elspotprice_eur]\n      ,[sale_potential_eur]          \n  FROM [dbo].[chargeplan] \n  WHERE[date] = CONVERT (date, GETDATE())\n  ORDER BY [hour] ASC\n  FOR JSON AUTO ;",
+						"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[est_consumption]\n      ,[est_production]\n      ,[surplus_production]\n      ,[charge_potential]\n      ,[charge_trigger]\n      ,[charging]\n      ,[accumulated_charge]\n      ,[elspotprice_dkk]\n      ,[surplus_sellable_production]\n      ,[sale_potential_dkk] \n      ,[elspotprice_eur]\n      ,[sale_potential_eur]          \n  FROM [dbo].[chargeplan] \n  WHERE[date] = CONVERT (date, GETDATE())\n  ORDER BY [hour] ASC;",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
