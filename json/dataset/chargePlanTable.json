@@ -38,8 +38,8 @@
 			},
 			{
 				"name": "charge_potential",
-				"type": "int",
-				"precision": 10
+				"type": "float",
+				"precision": 15
 			},
 			{
 				"name": "charge_trigger",
@@ -66,8 +66,18 @@
 			},
 			{
 				"name": "sale_potential_dkk",
-				"type": "int",
-				"precision": 10
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "elspotprice_eur",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "sale_potential_eur",
+				"type": "float",
+				"precision": 15
 			}
 		],
 		"typeProperties": {
