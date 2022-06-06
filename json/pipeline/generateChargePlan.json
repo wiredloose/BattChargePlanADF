@@ -30,7 +30,17 @@
 							"type": "JsonWriteSettings"
 						}
 					},
-					"enableStaging": false
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"sink": {
+									"path": "$['Column_1']"
+								}
+							}
+						]
+					}
 				},
 				"inputs": [
 					{
