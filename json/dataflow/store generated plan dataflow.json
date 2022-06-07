@@ -12,22 +12,71 @@
 					"name": "source1"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "chargePlanTable",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
-					"name": "derivedColumn1"
+					"name": "AlterRow1"
 				}
 			],
 			"scriptLines": [
-				"parameters{",
-				"     parameter1 as string (@activity('Web ChargePlanning').output.Response)",
-				"}",
-				"source(allowSchemaDrift: true,",
+				"source(output(",
+				"          accumulated_charge as float,",
+				"          charge_potential as float,",
+				"          charge_trigger as boolean,",
+				"          charging as boolean,",
+				"          date as date,",
+				"          elspotprice_dkk as float,",
+				"          elspotprice_eur as float,",
+				"          est_consumption as short,",
+				"          est_production as short,",
+				"          hour as short,",
+				"          id as string,",
+				"          sale_potential_dkk as float,",
+				"          sale_potential_eur as float,",
+				"          surplus_production as short,",
+				"          surplus_sellable_production as float",
+				"     ),",
+				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
-				"     moveFiles: ['/getchargeplan',''],",
 				"     documentForm: 'documentPerLine') ~> source1",
-				"source1 derive(generatedPlan = ERROR_FUNCTION('@activity(__SINGLE_QUOTE__Web ChargePlanning__SINGLE_QUOTE__).output.Response')) ~> derivedColumn1"
+				"source1 alterRow(upsertIf(true())) ~> AlterRow1",
+				"AlterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          id as string,",
+				"          date as date,",
+				"          hour as integer,",
+				"          est_consumption as integer,",
+				"          est_production as integer,",
+				"          surplus_production as integer,",
+				"          charge_potential as double,",
+				"          charge_trigger as boolean,",
+				"          charging as boolean,",
+				"          accumulated_charge as double,",
+				"          elspotprice_dkk as double,",
+				"          surplus_sellable_production as integer,",
+				"          sale_potential_dkk as double,",
+				"          elspotprice_eur as double,",
+				"          sale_potential_eur as double",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:true,",
+				"     keys:['id'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
 			]
 		}
 	}
