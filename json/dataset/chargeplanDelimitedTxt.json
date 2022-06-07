@@ -14,9 +14,10 @@
 				"folderPath": "getchargeplan",
 				"container": "adf"
 			},
-			"columnDelimiter": ",",
-			"escapeChar": "\\",
-			"quoteChar": "\""
+			"columnDelimiter": "",
+			"rowDelimiter": "",
+			"escapeChar": "",
+			"quoteChar": ""
 		},
 		"schema": []
 	}
