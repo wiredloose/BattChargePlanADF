@@ -97,7 +97,7 @@
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "Web ChargePlanning",
+						"activity": "Set var chargePlanJson",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -127,6 +127,26 @@
 						"computeType": "General"
 					},
 					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Set var chargePlanJson",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Web ChargePlanning",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "generatedPlanJsonStr",
+					"value": {
+						"value": "@activity('Web ChargePlanning').output.Response",
+						"type": "Expression"
+					}
 				}
 			}
 		],

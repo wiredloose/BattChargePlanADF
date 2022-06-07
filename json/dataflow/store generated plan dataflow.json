@@ -16,6 +16,9 @@
 			"transformations": [
 				{
 					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
 				}
 			],
 			"scriptLines": [
@@ -44,7 +47,12 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     query: 'SELECT \\'\\'',",
 				"     format: 'query') ~> source1",
-				"source1 derive(generatedPlan = ERROR_FUNCTION('')) ~> derivedColumn1"
+				"select1 derive(generatedPlan = $genPlanStr) ~> derivedColumn1",
+				"source1 select(mapColumn(",
+				"          {} = id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1"
 			]
 		}
 	}
