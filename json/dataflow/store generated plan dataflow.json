@@ -76,7 +76,24 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          id,",
+				"          date,",
+				"          hour,",
+				"          est_consumption,",
+				"          est_production,",
+				"          surplus_production,",
+				"          charge_potential,",
+				"          charge_trigger,",
+				"          charging,",
+				"          accumulated_charge,",
+				"          elspotprice_dkk,",
+				"          surplus_sellable_production,",
+				"          sale_potential_dkk,",
+				"          elspotprice_eur,",
+				"          sale_potential_eur",
+				"     )) ~> sink1"
 			]
 		}
 	}
