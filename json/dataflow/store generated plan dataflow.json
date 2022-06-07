@@ -1,0 +1,51 @@
+{
+	"name": "store generated plan dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "chargePlanTable",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     genPlanStr as string",
+				"}",
+				"source(output(",
+				"          id as string,",
+				"          date as date,",
+				"          hour as integer,",
+				"          est_consumption as integer,",
+				"          est_production as integer,",
+				"          surplus_production as integer,",
+				"          charge_potential as double,",
+				"          charge_trigger as boolean,",
+				"          charging as boolean,",
+				"          accumulated_charge as double,",
+				"          elspotprice_dkk as double,",
+				"          surplus_sellable_production as integer,",
+				"          sale_potential_dkk as double,",
+				"          elspotprice_eur as double,",
+				"          sale_potential_eur as double",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT \\'\\'',",
+				"     format: 'query') ~> source1",
+				"source1 derive(generatedPlan = ERROR_FUNCTION('')) ~> derivedColumn1"
+			]
+		}
+	}
+}
