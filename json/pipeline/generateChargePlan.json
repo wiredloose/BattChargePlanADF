@@ -156,7 +156,11 @@
 							"type": "JsonWriteSettings"
 						}
 					},
-					"enableStaging": false
+					"enableStaging": false,
+					"translator": {
+						"value": "@variables('generatedPlanJsonStr')",
+						"type": "Expression"
+					}
 				},
 				"inputs": [
 					{
