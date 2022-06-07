@@ -1,0 +1,23 @@
+{
+	"name": "chargeplanTxtTemplate",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BattChargePlanBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Template.txt",
+				"folderPath": "getchargeplan",
+				"container": "adf"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

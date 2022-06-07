@@ -1,0 +1,23 @@
+{
+	"name": "chargeplanDelimitedTxt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BattChargePlanBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "chargeplan.json",
+				"folderPath": "getchargeplan",
+				"container": "adf"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

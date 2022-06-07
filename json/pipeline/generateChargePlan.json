@@ -65,7 +65,13 @@
 					"body": {
 						"value": "@activity('Lookup chargeplan jsonfile').output.value[0].chargeplan",
 						"type": "Expression"
-					}
+					},
+					"datasets": [
+						{
+							"referenceName": "getChargePlan",
+							"type": "DatasetReference"
+						}
+					]
 				}
 			},
 			{
@@ -133,44 +139,68 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "JsonSource",
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "chargeplan",
+								"value": {
+									"value": "@activity('Web ChargePlanning').output.Response",
+									"type": "Expression"
+								}
+							}
+						],
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
-							"type": "JsonReadSettings"
+							"type": "DelimitedTextReadSettings"
 						}
 					},
 					"sink": {
-						"type": "JsonSink",
+						"type": "DelimitedTextSink",
 						"storeSettings": {
-							"type": "AzureBlobStorageWriteSettings",
-							"copyBehavior": {
-								"value": "@variables('generatedPlanJsonStr')",
-								"type": "Expression"
-							}
+							"type": "AzureBlobStorageWriteSettings"
 						},
 						"formatSettings": {
-							"type": "JsonWriteSettings"
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
 						}
 					},
 					"enableStaging": false,
 					"translator": {
-						"value": "@variables('generatedPlanJsonStr')",
-						"type": "Expression"
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "chargeplan",
+									"type": "String"
+								},
+								"sink": {
+									"type": "String",
+									"physicalType": "String",
+									"ordinal": 1
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
 					}
 				},
 				"inputs": [
 					{
-						"referenceName": "getChargePlan",
+						"referenceName": "chargeplanTxtTemplate",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "getChargePlan",
+						"referenceName": "chargeplanDelimitedTxt",
 						"type": "DatasetReference"
 					}
 				]
