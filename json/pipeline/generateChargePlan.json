@@ -56,7 +56,7 @@
 					"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
 					"method": "POST",
 					"body": {
-						"value": "@activity('Lookup1').output.value",
+						"value": "@activity('Lookup chargeplan jsonfile').output.value",
 						"type": "Expression"
 					}
 				}
