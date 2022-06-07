@@ -117,7 +117,7 @@
 						"type": "DataFlowReference",
 						"parameters": {
 							"genPlanStr": {
-								"value": "'@{activity('Web ChargePlanning').output.Response}'",
+								"value": "'@{variables('generatedPlanJsonStr')}'",
 								"type": "Expression"
 							}
 						}
