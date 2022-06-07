@@ -19,6 +19,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'SqlDbBattChargePlan'"
 		},
+		"generateChargePlan_functionKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'functionKey' of 'generateChargePlan'"
+		},
 		"AKV_BattChargePlan_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://BattChargePlanVault.vault.azure.net/"
@@ -35,6 +39,10 @@
 			"type": "string",
 			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
 		},
+		"RestServiceChargePlanning_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://chargeplanning.azurewebsites.net/api/generatePlan"
+		},
 		"RestServiceSonnenBattery_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-06-02T00:00:00+02:00&filter[end]=2022-06-02T23:59:59+02:00&filter[resolution]=1-hour"
@@ -42,6 +50,10 @@
 		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray"
+		},
+		"generateChargePlan_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://chargeplanning.azurewebsites.net"
 		},
 		"containerUri": {
 			"type": "string",
@@ -79,6 +91,9 @@
 					"SqlDbBattChargePlan_connectionString": {
 						"value": "[parameters('SqlDbBattChargePlan_connectionString')]"
 					},
+					"generateChargePlan_functionKey": {
+						"value": "[parameters('generateChargePlan_functionKey')]"
+					},
 					"AKV_BattChargePlan_properties_typeProperties_baseUrl": {
 						"value": "[parameters('AKV_BattChargePlan_properties_typeProperties_baseUrl')]"
 					},
@@ -91,11 +106,17 @@
 					"ForecastSolar_properties_typeProperties_url": {
 						"value": "[parameters('ForecastSolar_properties_typeProperties_url')]"
 					},
+					"RestServiceChargePlanning_properties_typeProperties_url": {
+						"value": "[parameters('RestServiceChargePlanning_properties_typeProperties_url')]"
+					},
 					"RestServiceSonnenBattery_properties_typeProperties_url": {
 						"value": "[parameters('RestServiceSonnenBattery_properties_typeProperties_url')]"
 					},
 					"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 						"value": "[parameters('RestService_jsonStructObjToArray_properties_typeProperties_url')]"
+					},
+					"generateChargePlan_properties_typeProperties_functionAppUrl": {
+						"value": "[parameters('generateChargePlan_properties_typeProperties_functionAppUrl')]"
 					}
 				}
 			},

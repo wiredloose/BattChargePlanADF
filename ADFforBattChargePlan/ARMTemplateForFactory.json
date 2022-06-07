@@ -19,6 +19,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'SqlDbBattChargePlan'"
 		},
+		"generateChargePlan_functionKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'functionKey' of 'generateChargePlan'"
+		},
 		"AKV_BattChargePlan_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://BattChargePlanVault.vault.azure.net/"
@@ -35,6 +39,10 @@
 			"type": "string",
 			"defaultValue": "https://api.forecast.solar/estimate/54.911280/9.764450/22/0/6.7?no_sun=1"
 		},
+		"RestServiceChargePlanning_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://chargeplanning.azurewebsites.net/api/generatePlan"
+		},
 		"RestServiceSonnenBattery_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-06-02T00:00:00+02:00&filter[end]=2022-06-02T23:59:59+02:00&filter[resolution]=1-hour"
@@ -42,6 +50,10 @@
 		"RestService_jsonStructObjToArray_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://jsonstructobjtoarray.azurewebsites.net/api/ObjectPropsToArray"
+		},
+		"generateChargePlan_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://chargeplanning.azurewebsites.net"
 		}
 	},
 	"variables": {
@@ -329,6 +341,284 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/generateChargePlan')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup chargeplan jsonfile",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "get chargeplan dataflow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": false,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "getChargePlan",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Web ChargePlanning",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Lookup chargeplan jsonfile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@activity('Lookup chargeplan jsonfile').output.value[0].chargeplan",
+								"type": "Expression"
+							},
+							"datasets": [
+								{
+									"referenceName": "getChargePlan",
+									"type": "DatasetReference",
+									"parameters": {}
+								}
+							]
+						}
+					},
+					{
+						"name": "get chargeplan dataflow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "get chargeplan dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Set var chargePlanJson",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Web ChargePlanning",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "generatedPlanJsonStr",
+							"value": {
+								"value": "@activity('Web ChargePlanning').output.Response",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "store generated chargeplanJsonFile",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Set var chargePlanJson",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"additionalColumns": [
+									{
+										"name": "chargeplan",
+										"value": {
+											"value": "@activity('Web ChargePlanning').output.Response",
+											"type": "Expression"
+										}
+									}
+								],
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "chargeplan",
+											"type": "String"
+										},
+										"sink": {
+											"type": "String",
+											"physicalType": "String",
+											"ordinal": 1
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "chargeplanTxtTemplate",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "chargeplanDelimitedTxt",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "write to DB chargeplantable",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "store generated chargeplanJsonFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "store generated plan dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								},
+								"linkedServiceParameters": {}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"generatedPlanJsonStr": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/getChargePlan')]",
+				"[concat(variables('factoryId'), '/dataflows/get chargeplan dataflow')]",
+				"[concat(variables('factoryId'), '/datasets/chargeplanTxtTemplate')]",
+				"[concat(variables('factoryId'), '/datasets/chargeplanDelimitedTxt')]",
+				"[concat(variables('factoryId'), '/dataflows/store generated plan dataflow')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -512,6 +802,178 @@
 				"[concat(variables('factoryId'), '/datasets/TestTbl2')]",
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
 				"[concat(variables('factoryId'), '/dataflows/dataflow3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/querychargeplan')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "If Battery already charging",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(pipeline().parameters.batterychargingflag,0)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Get Charge Plan",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": "SELECT [id]\r\n      ,[date]\r\n      ,[hour]\r\n      ,[est_consumption]\r\n      ,[est_production]\r\n      ,[surplus_production]\r\n      ,[charge_potential]\r\n      ,[charge_trigger]\r\n      ,[charging]\r\n      ,[accumulated_charge]\r\n      ,[elspotprice_dkk]\r\n      ,[surplus_sellable_production]\r\n      ,[sale_potential_dkk] \r\n      ,[elspotprice_eur]\r\n      ,[sale_potential_eur]          \r\n  FROM [dbo].[chargeplan] \r\n  WHERE[date] = '2022-06-06'\r\n  ORDER BY [hour] ASC\r\n  FOR JSON AUTO ;",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"name": "JSON_F52E2B61-18A1-11d1-B105-00805F49916B",
+														"type": "String"
+													},
+													"sink": {
+														"path": "$['JSON_F52E2B61-18A1-11d1-B105-00805F49916B']"
+													}
+												}
+											]
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "chargePlanTable",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "getChargePlan",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								},
+								{
+									"name": "Set varChargePlanJson",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Get Charge Plan",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "varChargePlanJson",
+										"value": {
+											"value": "@string(activity('Get Charge Plan').output)",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "If ChargePlan not exists or not valid",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "If Battery already charging",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(contains(variables('varChargePlanJson'),'\"charge_trigger\": true'))",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "gen chargeplan",
+									"type": "WebActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
+										"method": "POST",
+										"headers": {},
+										"body": {
+											"value": "@json(variables('varChargePlanJson'))",
+											"type": "Expression"
+										},
+										"datasets": [
+											{
+												"referenceName": "getChargePlan",
+												"type": "DatasetReference",
+												"parameters": {}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"batterychargingflag": {
+						"type": "int",
+						"defaultValue": 0
+					}
+				},
+				"variables": {
+					"varChargePlanJson": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]",
+				"[concat(variables('factoryId'), '/datasets/getChargePlan')]"
 			]
 		},
 		{
@@ -852,6 +1314,62 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/chargeplanDelimitedTxt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BattChargePlanBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "chargeplan.json",
+						"folderPath": "getchargeplan",
+						"container": "adf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "",
+					"quoteChar": ""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/chargeplanTxtTemplate')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BattChargePlanBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Template.txt",
+						"folderPath": "getchargeplan",
+						"container": "adf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/forecastedWattsBlob')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -872,6 +1390,31 @@
 					"quoteChar": "\""
 				},
 				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/getChargePlan')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BattChargePlanBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "chargeplan.json",
+						"folderPath": "getchargeplan",
+						"container": "adf"
+					}
+				},
+				"schema": {}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/BattChargePlanBlobStorage1')]"
@@ -969,6 +1512,21 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/RestServiceChargePlanning')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('RestServiceChargePlanning_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/RestServiceSonnenBattery')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -1013,6 +1571,24 @@
 				"type": "AzureSqlDatabase",
 				"typeProperties": {
 					"connectionString": "[parameters('SqlDbBattChargePlan_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/generateChargePlan')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureFunction",
+				"typeProperties": {
+					"functionAppUrl": "[parameters('generateChargePlan_properties_typeProperties_functionAppUrl')]",
+					"functionKey": {
+						"type": "SecureString",
+						"value": "[parameters('generateChargePlan_functionKey')]"
+					},
+					"authentication": "Anonymous"
 				}
 			},
 			"dependsOn": []
@@ -1664,6 +2240,187 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ForecastSolarJson')]",
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/get chargeplan dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "getChargePlan",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "derivedColumn1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as double,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as double,",
+						"          elspotprice_eur as double,",
+						"          sale_potential_eur as double",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT TOP 50 [id]\\n      ,[date]\\n      ,[hour]\\n      ,[est_consumption]\\n      ,[est_production]\\n      ,[surplus_production]\\n      ,[charge_potential]\\n      ,[charge_trigger]\\n      ,[charging]\\n      ,[accumulated_charge]\\n      ,[elspotprice_dkk]\\n      ,[surplus_sellable_production]\\n      ,[sale_potential_dkk] \\n      ,[elspotprice_eur]\\n      ,[sale_potential_eur]          \\n  FROM [dbo].[chargeplan] \\n  WHERE[date] = CONVERT (date, GETDATE())\\n  ORDER BY [hour] ASC',",
+						"     format: 'query') ~> source1",
+						"source1 aggregate(objArr = collect(@(id, date, hour, est_consumption, est_production, surplus_production, charge_potential, charge_trigger, charging, accumulated_charge, elspotprice_dkk, surplus_sellable_production, sale_potential_dkk, elspotprice_eur, sale_potential_eur) )) ~> aggregate1",
+						"aggregate1 derive(chargeplan = toString(objArr)) ~> derivedColumn1",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['chargeplan.json'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          chargeplan = objArr",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]",
+				"[concat(variables('factoryId'), '/datasets/getChargePlan')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/store generated plan dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "getChargePlan",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AlterRow1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          accumulated_charge as float,",
+						"          charge_potential as float,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          date as date,",
+						"          elspotprice_dkk as float,",
+						"          elspotprice_eur as float,",
+						"          est_consumption as short,",
+						"          est_production as short,",
+						"          hour as short,",
+						"          id as string,",
+						"          sale_potential_dkk as float,",
+						"          sale_potential_eur as float,",
+						"          surplus_production as short,",
+						"          surplus_sellable_production as float",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> source1",
+						"source1 alterRow(upsertIf(true())) ~> AlterRow1",
+						"AlterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as string,",
+						"          date as date,",
+						"          hour as integer,",
+						"          est_consumption as integer,",
+						"          est_production as integer,",
+						"          surplus_production as integer,",
+						"          charge_potential as double,",
+						"          charge_trigger as boolean,",
+						"          charging as boolean,",
+						"          accumulated_charge as double,",
+						"          elspotprice_dkk as double,",
+						"          surplus_sellable_production as integer,",
+						"          sale_potential_dkk as double,",
+						"          elspotprice_eur as double,",
+						"          sale_potential_eur as double",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['id'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          id,",
+						"          date,",
+						"          hour,",
+						"          est_consumption,",
+						"          est_production,",
+						"          surplus_production,",
+						"          charge_potential,",
+						"          charge_trigger,",
+						"          charging,",
+						"          accumulated_charge,",
+						"          elspotprice_dkk,",
+						"          surplus_sellable_production,",
+						"          sale_potential_dkk,",
+						"          elspotprice_eur,",
+						"          sale_potential_eur",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/getChargePlan')]",
 				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
 			]
 		}
