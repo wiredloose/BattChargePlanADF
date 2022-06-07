@@ -6,7 +6,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "chargePlanTable",
+						"referenceName": "getChargePlan",
 						"type": "DatasetReference"
 					},
 					"name": "source1"
@@ -16,43 +16,18 @@
 			"transformations": [
 				{
 					"name": "derivedColumn1"
-				},
-				{
-					"name": "select1"
 				}
 			],
 			"scriptLines": [
 				"parameters{",
-				"     genPlanStr as string",
+				"     parameter1 as string (@activity('Web ChargePlanning').output.Response)",
 				"}",
-				"source(output(",
-				"          id as string,",
-				"          date as date,",
-				"          hour as integer,",
-				"          est_consumption as integer,",
-				"          est_production as integer,",
-				"          surplus_production as integer,",
-				"          charge_potential as double,",
-				"          charge_trigger as boolean,",
-				"          charging as boolean,",
-				"          accumulated_charge as double,",
-				"          elspotprice_dkk as double,",
-				"          surplus_sellable_production as integer,",
-				"          sale_potential_dkk as double,",
-				"          elspotprice_eur as double,",
-				"          sale_potential_eur as double",
-				"     ),",
-				"     allowSchemaDrift: true,",
+				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT \\'\\'',",
-				"     format: 'query') ~> source1",
-				"select1 derive(generatedPlan = $genPlanStr) ~> derivedColumn1",
-				"source1 select(mapColumn(",
-				"          {} = id",
-				"     ),",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1"
+				"     ignoreNoFilesFound: false,",
+				"     moveFiles: ['/getchargeplan',''],",
+				"     documentForm: 'documentPerLine') ~> source1",
+				"source1 derive(generatedPlan = ERROR_FUNCTION('@activity(__SINGLE_QUOTE__Web ChargePlanning__SINGLE_QUOTE__).output.Response')) ~> derivedColumn1"
 			]
 		}
 	}
