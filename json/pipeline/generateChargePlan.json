@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup1",
+				"name": "Lookup chargeplan jsonfile",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -34,11 +34,11 @@
 				}
 			},
 			{
-				"name": "Web1",
+				"name": "Web ChargePlanning",
 				"type": "WebActivity",
 				"dependsOn": [
 					{
-						"activity": "Lookup1",
+						"activity": "Lookup chargeplan jsonfile",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -56,7 +56,7 @@
 					"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
 					"method": "POST",
 					"body": {
-						"value": "@activity('Lookup1').output",
+						"value": "@activity('Lookup1').output.value",
 						"type": "Expression"
 					}
 				}
