@@ -50,7 +50,7 @@
 					"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
 					"method": "POST",
 					"body": {
-						"value": "@activity('Lookup1').output",
+						"value": "@activity('Lookup1').output.value",
 						"type": "Expression"
 					}
 				}
