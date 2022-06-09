@@ -587,8 +587,7 @@
 								"datasetParameters": {
 									"source1": {},
 									"sink1": {}
-								},
-								"linkedServiceParameters": {}
+								}
 							},
 							"staging": {},
 							"compute": {
@@ -1614,8 +1613,8 @@
 					"recurrence": {
 						"frequency": "Day",
 						"interval": 1,
-						"startTime": "2022-05-31T00:54:00Z",
-						"timeZone": "UTC",
+						"startTime": "2022-05-31T00:54:00",
+						"timeZone": "Romance Standard Time",
 						"schedule": {
 							"minutes": [
 								15
