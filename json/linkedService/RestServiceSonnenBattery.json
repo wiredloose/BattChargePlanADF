@@ -5,7 +5,7 @@
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-06-06T00:00:00+02:00&filter[end]=2022-06-06T23:59:59+02:00&filter[resolution]=1-hour",
+			"url": "https://my-api.sonnen.de/v1/sites/3f53e2ac-5815-486b-806f-7298991fe356/statistics?filter[start]=2022-06-07T00:00:00+02:00&filter[end]=2022-06-07T23:59:59+02:00&filter[resolution]=1-hour",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous",
 			"authHeaders": {
