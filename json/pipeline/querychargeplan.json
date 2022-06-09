@@ -9,14 +9,21 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@equals(pipeline().parameters.batterychargingflag,0)",
+						"value": "@equals(pipeline().parameters.batterychargingflag,1)",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
 						{
 							"name": "Get Charge Plan",
 							"type": "Copy",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "Set status check-valid-chargeplan",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "7.00:00:00",
 								"retry": 0,
@@ -89,6 +96,28 @@
 									"type": "Expression"
 								}
 							}
+						},
+						{
+							"name": "Set status check-valid-chargeplan",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "running: checking charge plan exists and valid"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Set status batt-already-charging",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "stopped: battery already charging"
+							}
 						}
 					]
 				}
@@ -110,11 +139,30 @@
 						"value": "@not(contains(variables('varChargePlanJson'),'\"charge_trigger\": true'))",
 						"type": "Expression"
 					},
+					"ifFalseActivities": [
+						{
+							"name": "Set status check-should-charging-begin",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "running: check should charging begin"
+							}
+						}
+					],
 					"ifTrueActivities": [
 						{
 							"name": "gen chargeplan",
 							"type": "WebActivity",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "Set status generate-charge-plan",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "7.00:00:00",
 								"retry": 0,
@@ -137,6 +185,16 @@
 									}
 								]
 							}
+						},
+						{
+							"name": "Set status generate-charge-plan",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "running: generate charge plan"
+							}
 						}
 					]
 				}
@@ -151,6 +209,10 @@
 		"variables": {
 			"varChargePlanJson": {
 				"type": "String"
+			},
+			"varPipelineStatus": {
+				"type": "String",
+				"defaultValue": "running"
 			}
 		},
 		"annotations": []
