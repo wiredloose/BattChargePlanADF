@@ -198,6 +198,12 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "If Should Charging Begin",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": []
 			}
 		],
 		"parameters": {
