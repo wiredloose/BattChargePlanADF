@@ -816,14 +816,21 @@
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@equals(pipeline().parameters.batterychargingflag,0)",
+								"value": "@equals(pipeline().parameters.batterychargingflag,1)",
 								"type": "Expression"
 							},
 							"ifFalseActivities": [
 								{
 									"name": "Get Charge Plan",
 									"type": "Copy",
-									"dependsOn": [],
+									"dependsOn": [
+										{
+											"activity": "Set status check-valid-chargeplan",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
 									"policy": {
 										"timeout": "7.00:00:00",
 										"retry": 0,
@@ -898,6 +905,28 @@
 											"type": "Expression"
 										}
 									}
+								},
+								{
+									"name": "Set status check-valid-chargeplan",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "varPipelineStatus",
+										"value": "running: checking charge plan exists and valid"
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Set status batt-already-charging",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "varPipelineStatus",
+										"value": "stopped: battery already charging"
+									}
 								}
 							]
 						}
@@ -907,7 +936,7 @@
 						"type": "IfCondition",
 						"dependsOn": [
 							{
-								"activity": "If Battery already charging",
+								"activity": "Lookup chargeplan not exists or not valid",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -916,40 +945,163 @@
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@not(contains(variables('varChargePlanJson'),'\"charge_trigger\": true'))",
+								"value": "@equals(activity('Lookup chargeplan not exists or not valid').output.count,0)",
 								"type": "Expression"
 							},
-							"ifTrueActivities": [
+							"ifFalseActivities": [
 								{
-									"name": "gen chargeplan",
-									"type": "WebActivity",
+									"name": "Set status check-should-charging-begin",
+									"type": "SetVariable",
 									"dependsOn": [],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
 									"userProperties": [],
 									"typeProperties": {
-										"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
-										"method": "POST",
-										"headers": {},
-										"body": {
-											"value": "@json(variables('varChargePlanJson'))",
-											"type": "Expression"
+										"variableName": "varPipelineStatus",
+										"value": "running: check should charging begin"
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Set status generate-charge-plan",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "varPipelineStatus",
+										"value": "running: generate charge plan"
+									}
+								},
+								{
+									"name": "Execute Pipeline generateChargePlan",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "Set status generate-charge-plan",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "generateChargePlan",
+											"type": "PipelineReference"
 										},
-										"datasets": [
-											{
-												"referenceName": "getChargePlan",
-												"type": "DatasetReference",
-												"parameters": {}
-											}
-										]
+										"waitOnCompletion": true,
+										"parameters": {}
 									}
 								}
 							]
+						}
+					},
+					{
+						"name": "If Should Charging Begin",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Lookup should charging begin",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(activity('Lookup should charging begin').output.value, 'True')",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Set pipeline ends no-command-given",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "varPipelineStatus",
+										"value": "stopped: no command given - battery NOT set for charging"
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Set status begin-charging",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "varPipelineStatus",
+										"value": "running: begin charging command given"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Lookup should charging begin",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "If ChargePlan not exists or not valid",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[charge_trigger]\n      ,[charging]\n      ,[elspotprice_dkk]\n      ,[elspotprice_eur]\n  FROM [dbo].[chargeplan] \n  WHERE[date] = CONVERT (date, GETDATE()) AND [hour] = DATEPART(hour, GETDATE())+2\n  ORDER BY [hour] ASC",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "Lookup chargeplan not exists or not valid",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "If Battery already charging",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[charge_trigger]\n      ,[charging]\n      ,[elspotprice_dkk]\n      ,[elspotprice_eur]\n  FROM [dbo].[chargeplan] \n  WHERE[date] = CONVERT (date, GETDATE()) AND [charge_trigger] = 1\n  ORDER BY [hour] ASC",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "chargePlanTable",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
 						}
 					}
 				],
@@ -966,13 +1118,18 @@
 				"variables": {
 					"varChargePlanJson": {
 						"type": "String"
+					},
+					"varPipelineStatus": {
+						"type": "String",
+						"defaultValue": "running"
 					}
 				},
 				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]",
-				"[concat(variables('factoryId'), '/datasets/getChargePlan')]"
+				"[concat(variables('factoryId'), '/datasets/getChargePlan')]",
+				"[concat(variables('factoryId'), '/pipelines/generateChargePlan')]"
 			]
 		},
 		{
