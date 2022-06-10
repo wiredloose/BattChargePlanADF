@@ -821,92 +821,6 @@
 							},
 							"ifFalseActivities": [
 								{
-									"name": "Get Charge Plan",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "Set status check-valid-chargeplan",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderQuery": "SELECT [id]\r\n      ,[date]\r\n      ,[hour]\r\n      ,[est_consumption]\r\n      ,[est_production]\r\n      ,[surplus_production]\r\n      ,[charge_potential]\r\n      ,[charge_trigger]\r\n      ,[charging]\r\n      ,[accumulated_charge]\r\n      ,[elspotprice_dkk]\r\n      ,[surplus_sellable_production]\r\n      ,[sale_potential_dkk] \r\n      ,[elspotprice_eur]\r\n      ,[sale_potential_eur]          \r\n  FROM [dbo].[chargeplan] \r\n  WHERE[date] = '2022-06-06'\r\n  ORDER BY [hour] ASC\r\n  FOR JSON AUTO ;",
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "JsonSink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											},
-											"formatSettings": {
-												"type": "JsonWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"mappings": [
-												{
-													"source": {
-														"name": "JSON_F52E2B61-18A1-11d1-B105-00805F49916B",
-														"type": "String"
-													},
-													"sink": {
-														"path": "$['JSON_F52E2B61-18A1-11d1-B105-00805F49916B']"
-													}
-												}
-											]
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "chargePlanTable",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "getChargePlan",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								},
-								{
-									"name": "Set varChargePlanJson",
-									"type": "SetVariable",
-									"dependsOn": [
-										{
-											"activity": "Get Charge Plan",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "varChargePlanJson",
-										"value": {
-											"value": "@string(activity('Get Charge Plan').output)",
-											"type": "Expression"
-										}
-									}
-								},
-								{
 									"name": "Set status check-valid-chargeplan",
 									"type": "SetVariable",
 									"dependsOn": [],
@@ -945,7 +859,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@equals(activity('Lookup chargeplan not exists or not valid').output.count,0)",
+								"value": "@equals(activity('Lookup chargeplan not exists or not valid').output.count,0) ",
 								"type": "Expression"
 							},
 							"ifFalseActivities": [
@@ -1009,7 +923,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@equals(activity('Lookup should charging begin').output.value, 'True')",
+								"value": "@equals(activity('Lookup should charging begin').output.firstRow.charge_trigger, 'true')",
 								"type": "Expression"
 							},
 							"ifFalseActivities": [
@@ -1101,7 +1015,8 @@
 								"referenceName": "chargePlanTable",
 								"type": "DatasetReference",
 								"parameters": {}
-							}
+							},
+							"firstRowOnly": false
 						}
 					}
 				],
@@ -1128,7 +1043,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]",
-				"[concat(variables('factoryId'), '/datasets/getChargePlan')]",
 				"[concat(variables('factoryId'), '/pipelines/generateChargePlan')]"
 			]
 		},
