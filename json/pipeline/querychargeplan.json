@@ -127,7 +127,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "If Battery already charging",
+						"activity": "Lookup chargeplan not exists or not valid",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -136,7 +136,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@not(contains(variables('varChargePlanJson'),'\"charge_trigger\": true'))",
+						"value": "@equals(activity('Lookup chargeplan not exists or not valid').output.count,0)",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
@@ -202,13 +202,57 @@
 			{
 				"name": "If Should Charging Begin",
 				"type": "IfCondition",
-				"dependsOn": [],
-				"userProperties": []
+				"dependsOn": [
+					{
+						"activity": "Lookup should charging begin",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('Lookup should charging begin').output.value, 'True')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Set pipeline ends no-command-given",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "stopped: no command given - battery NOT set for charging"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Set status begin-charging",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "running: begin charging command given"
+							}
+						}
+					]
+				}
 			},
 			{
 				"name": "Lookup should charging begin",
 				"type": "Lookup",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "If ChargePlan not exists or not valid",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
@@ -220,6 +264,39 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[charge_trigger]\n      ,[charging]\n      ,[elspotprice_dkk]\n      ,[elspotprice_eur]\n  FROM [dbo].[chargeplan] \n  WHERE[date] = CONVERT (date, GETDATE()) AND [hour] = DATEPART(hour, GETDATE())+2\n  ORDER BY [hour] ASC",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "chargePlanTable",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Lookup chargeplan not exists or not valid",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "If Battery already charging",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT [id]\n      ,[date]\n      ,[hour]\n      ,[charge_trigger]\n      ,[charging]\n      ,[elspotprice_dkk]\n      ,[elspotprice_eur]\n  FROM [dbo].[chargeplan] \n  WHERE[date] = CONVERT (date, GETDATE()) AND [charge_trigger] = 1\n  ORDER BY [hour] ASC",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
