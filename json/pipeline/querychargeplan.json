@@ -52,7 +52,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@contains(activity('Lookup chargeplan not exists or not valid').output, 'count')",
+						"value": "@equals(activity('Lookup chargeplan not exists or not valid').output.count,0) ",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
@@ -115,7 +115,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@equals(activity('Lookup should charging begin').output.value, 'True')",
+						"value": "@equals(activity('Lookup should charging begin').output.firstRow.charge_trigger, 'true')",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
