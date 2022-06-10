@@ -52,7 +52,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@equals(activity('Lookup chargeplan not exists or not valid').output.count,0)",
+						"value": "@contains(activity('Lookup chargeplan not exists or not valid').output, 'count')",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
@@ -205,7 +205,8 @@
 					"dataset": {
 						"referenceName": "chargePlanTable",
 						"type": "DatasetReference"
-					}
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
