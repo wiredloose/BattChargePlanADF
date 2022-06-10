@@ -153,8 +153,18 @@
 					],
 					"ifTrueActivities": [
 						{
-							"name": "gen chargeplan",
-							"type": "WebActivity",
+							"name": "Set status generate-charge-plan",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "varPipelineStatus",
+								"value": "running: generate charge plan"
+							}
+						},
+						{
+							"name": "Execute Pipeline generateChargePlan",
+							"type": "ExecutePipeline",
 							"dependsOn": [
 								{
 									"activity": "Set status generate-charge-plan",
@@ -163,37 +173,13 @@
 									]
 								}
 							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
 							"userProperties": [],
 							"typeProperties": {
-								"url": "https://chargeplanning.azurewebsites.net/api/generatePlan",
-								"method": "POST",
-								"body": {
-									"value": "@json(variables('varChargePlanJson'))",
-									"type": "Expression"
+								"pipeline": {
+									"referenceName": "generateChargePlan",
+									"type": "PipelineReference"
 								},
-								"datasets": [
-									{
-										"referenceName": "getChargePlan",
-										"type": "DatasetReference"
-									}
-								]
-							}
-						},
-						{
-							"name": "Set status generate-charge-plan",
-							"type": "SetVariable",
-							"dependsOn": [],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "varPipelineStatus",
-								"value": "running: generate charge plan"
+								"waitOnCompletion": true
 							}
 						}
 					]
