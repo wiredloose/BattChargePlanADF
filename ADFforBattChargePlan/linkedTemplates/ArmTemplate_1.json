@@ -1905,6 +1905,37 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/elspotprices-loaddata')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/hourly_querychargeplan20220613')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "querychargeplan",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 1,
+						"startTime": "2022-06-13T18:27:00",
+						"endTime": "2022-06-13T23:00:00",
+						"timeZone": "Romance Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/querychargeplan')]"
+			]
 		}
 	]
 }
