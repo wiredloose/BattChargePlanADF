@@ -1,0 +1,25 @@
+{
+	"name": "hourly_querychargeplan20220614",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "querychargeplan",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Hour",
+				"interval": 1,
+				"startTime": "2022-06-14T04:01:00",
+				"endTime": "2022-06-14T21:03:00",
+				"timeZone": "Romance Standard Time"
+			}
+		}
+	}
+}
