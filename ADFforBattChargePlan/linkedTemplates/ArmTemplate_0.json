@@ -234,6 +234,27 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/hourly_querychargeplan20220613')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 1,
+						"startTime": "2022-06-13T18:27:00",
+						"endTime": "2022-06-13T23:00:00",
+						"timeZone": "Romance Standard Time"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ForecastSolarJson')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -471,99 +492,6 @@
 				"typeProperties": {
 					"schema": "dbo",
 					"table": "TestTbl2"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/SqlDbBattChargePlan')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/chargePlanTable')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "SqlDbBattChargePlan",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "id",
-						"type": "nvarchar"
-					},
-					{
-						"name": "date",
-						"type": "date"
-					},
-					{
-						"name": "hour",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "est_consumption",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "est_production",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "surplus_production",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "charge_potential",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "charge_trigger",
-						"type": "bit"
-					},
-					{
-						"name": "charging",
-						"type": "bit"
-					},
-					{
-						"name": "accumulated_charge",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "elspotprice_dkk",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "surplus_sellable_production",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "sale_potential_dkk",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "elspotprice_eur",
-						"type": "float",
-						"precision": 15
-					},
-					{
-						"name": "sale_potential_eur",
-						"type": "float",
-						"precision": 15
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "chargeplan"
 				}
 			},
 			"dependsOn": [

@@ -13,6 +13,97 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/chargePlanTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlDbBattChargePlan",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "date",
+						"type": "date"
+					},
+					{
+						"name": "hour",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_consumption",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "est_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surplus_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "charge_potential",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "charge_trigger",
+						"type": "bit"
+					},
+					{
+						"name": "charging",
+						"type": "bit"
+					},
+					{
+						"name": "accumulated_charge",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "elspotprice_dkk",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "surplus_sellable_production",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "sale_potential_dkk",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "elspotprice_eur",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "sale_potential_eur",
+						"type": "float",
+						"precision": 15
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "chargeplan"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/chargeplanDelimitedTxt')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -224,7 +315,9 @@
 					]
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/dataflow2')]",
@@ -538,7 +631,9 @@
 					]
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/forecastsolar dataflow')]",
@@ -670,7 +765,9 @@
 					]
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/get chargeplan dataflow')]",
@@ -743,6 +840,7 @@
 				}
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]",
 				"[concat(variables('factoryId'), '/datasets/getChargePlan')]"
 			]
 		},
@@ -848,7 +946,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/getChargePlan')]"
+				"[concat(variables('factoryId'), '/datasets/getChargePlan')]",
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]"
 			]
 		},
 		{
@@ -1827,6 +1926,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chargePlanTable')]",
 				"[concat(variables('factoryId'), '/pipelines/generateChargePlan')]"
 			]
 		},
@@ -1836,7 +1936,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -1874,7 +1974,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -1904,37 +2004,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/elspotprices-loaddata')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/hourly_querychargeplan20220613')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "querychargeplan",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Hour",
-						"interval": 1,
-						"startTime": "2022-06-13T18:27:00",
-						"endTime": "2022-06-13T23:00:00",
-						"timeZone": "Romance Standard Time"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/querychargeplan')]"
 			]
 		}
 	]
