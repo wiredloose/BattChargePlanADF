@@ -2,7 +2,7 @@
 	"name": "hourly_querychargeplan20220614",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Stopped",
+		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
